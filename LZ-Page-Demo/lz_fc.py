@@ -76,9 +76,9 @@ def show_lz_window():
     button_canvas = tk.Canvas(
         button_frame, 
         width=180, 
-        height=80, 
+        height=40, 
         bg='#000000', 
-        highlightthickness=0,
+        highlightthickness=2,
         cursor='hand2'
     )
     button_canvas.pack()
@@ -95,7 +95,7 @@ def show_lz_window():
         canvas.create_rectangle(x1, y1+radius, x2, y2-radius, fill=fill_color, outline=outline_color, width=1)
     
     # 绘制按钮背景
-    draw_rounded_rect(button_canvas, 5, 5, 175, 35, 8, "#1A1A1A", "#333333")
+    # draw_rounded_rect(button_canvas, 5, 5, 175, 35, 8, "#1A1A1A", "#333333")
     
     # 添加按钮文字
     button_text = button_canvas.create_text(
@@ -108,13 +108,13 @@ def show_lz_window():
     # 添加鼠标交互效果
     def on_button_enter(event):
         button_canvas.delete("all")
-        draw_rounded_rect(button_canvas, 5, 5, 175, 35, 8, "#252525", "#444444")
-        button_canvas.create_text(90, 20, text="点击访问网站", font=("Microsoft YaHei UI", 12), fill="#AAAAAA")
+        # draw_rounded_rect(button_canvas, 5, 5, 175, 35, 8, "#252525", "#444444")
+        button_canvas.create_text(90, 20, text="点击访问网站", font=("Microsoft YaHei UI", 21), fill="#AAAAAA")
     
     def on_button_leave(event):
         button_canvas.delete("all")
-        draw_rounded_rect(button_canvas, 5, 5, 175, 35, 8, "#1A1A1A", "#333333")
-        button_canvas.create_text(90, 20, text="点击访问网站", font=("Microsoft YaHei UI", 12), fill="#888888")
+        # draw_rounded_rect(button_canvas, 5, 5, 175, 35, 8, "#1A1A1A", "#333333")
+        button_canvas.create_text(90, 20, text="点击访问网站", font=("Microsoft YaHei UI", 18), fill="#888888")
     
     def on_button_click(event):
         open_image_link()
