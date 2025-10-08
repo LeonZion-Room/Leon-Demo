@@ -14,7 +14,7 @@ def show_lz_window():
     root.resizable(False, False)
     
     # 设置窗口背景色为深色主题
-    root.configure(bg='#1E1E1E')
+    root.configure(bg='#000000')
     
     # 设置窗口居中
     root.update_idletasks()
@@ -23,11 +23,11 @@ def show_lz_window():
     root.geometry(f"600x410+{x}+{y}")
     
     # 创建主容器框架，深色主题
-    main_frame = tk.Frame(root, bg='#1E1E1E', padx=3, pady=3)
+    main_frame = tk.Frame(root, bg='#000000', padx=3, pady=3)
     main_frame.pack(fill=tk.BOTH, expand=True)
     
     # 创建上方大的深色区域（图片区域）
-    image_frame = tk.Frame(main_frame, bg='#2D2D30', height=340, relief='flat', bd=0)
+    image_frame = tk.Frame(main_frame, bg='#000000', height=340, relief='flat', bd=0)
     image_frame.pack(fill=tk.X, pady=(0, 5))
     image_frame.pack_propagate(False)
     
@@ -39,7 +39,7 @@ def show_lz_window():
         webbrowser.open(image_link_url)
     
     # 在深色区域中添加内容
-    content_frame = tk.Frame(image_frame, bg='#2D2D30', cursor='hand2')
+    content_frame = tk.Frame(image_frame, bg='#000000', cursor='hand2')
     content_frame.place(relx=0.5, rely=0.5, anchor='center')
     
     # 绑定点击事件到整个内容区域
@@ -51,10 +51,10 @@ def show_lz_window():
         text="LZ",
         font=("Microsoft YaHei UI", 48, "bold"),
         fg="#E0E0E0",
-        bg='#2D2D30',
+        bg='#000000',
         cursor='hand2'
     )
-    title_label.pack()
+    title_label.pack(pady=(0, 5))
     title_label.bind("<Button-1>", lambda e: open_image_link())
     
     subtitle_label = tk.Label(
@@ -62,33 +62,77 @@ def show_lz_window():
         text="Studio",
         font=("Microsoft YaHei UI", 34),
         fg="#B0B0B0",
-        bg='#2D2D30',
+        bg='#000000',
         cursor='hand2'
     )
-    subtitle_label.pack()
+    subtitle_label.pack(pady=(0, 15))
     subtitle_label.bind("<Button-1>", lambda e: open_image_link())
     
-    # 添加点击提示
-    click_hint_label = tk.Label(
-        content_frame,
-        text="-> 点击访问网站 <-",
-        font=("Microsoft YaHei UI", 30),
-        fg="#808080",
-        bg='#2D2D30',
+    # 创建圆角按钮容器
+    button_frame = tk.Frame(content_frame, bg='#000000')
+    button_frame.pack(pady=(10, 5))
+    
+    # 使用Canvas创建真正的圆角按钮
+    button_canvas = tk.Canvas(
+        button_frame, 
+        width=180, 
+        height=80, 
+        bg='#000000', 
+        highlightthickness=0,
         cursor='hand2'
     )
-    click_hint_label.pack(pady=(5, 0))
-    click_hint_label.bind("<Button-1>", lambda e: open_image_link())
+    button_canvas.pack()
+    
+    # 绘制圆角矩形背景
+    def draw_rounded_rect(canvas, x1, y1, x2, y2, radius, fill_color, outline_color):
+        # 绘制圆角矩形的各个部分
+        canvas.create_arc(x1, y1, x1+2*radius, y1+2*radius, start=90, extent=90, fill=fill_color, outline=outline_color, width=1)
+        canvas.create_arc(x2-2*radius, y1, x2, y1+2*radius, start=0, extent=90, fill=fill_color, outline=outline_color, width=1)
+        canvas.create_arc(x1, y2-2*radius, x1+2*radius, y2, start=180, extent=90, fill=fill_color, outline=outline_color, width=1)
+        canvas.create_arc(x2-2*radius, y2-2*radius, x2, y2, start=270, extent=90, fill=fill_color, outline=outline_color, width=1)
+        
+        canvas.create_rectangle(x1+radius, y1, x2-radius, y2, fill=fill_color, outline=outline_color, width=1)
+        canvas.create_rectangle(x1, y1+radius, x2, y2-radius, fill=fill_color, outline=outline_color, width=1)
+    
+    # 绘制按钮背景
+    draw_rounded_rect(button_canvas, 5, 5, 175, 35, 8, "#1A1A1A", "#333333")
+    
+    # 添加按钮文字
+    button_text = button_canvas.create_text(
+        90, 20, 
+        text="点击访问网站", 
+        font=("Microsoft YaHei UI", 18), 
+        fill="#888888"
+    )
+    
+    # 添加鼠标交互效果
+    def on_button_enter(event):
+        button_canvas.delete("all")
+        draw_rounded_rect(button_canvas, 5, 5, 175, 35, 8, "#252525", "#444444")
+        button_canvas.create_text(90, 20, text="点击访问网站", font=("Microsoft YaHei UI", 12), fill="#AAAAAA")
+    
+    def on_button_leave(event):
+        button_canvas.delete("all")
+        draw_rounded_rect(button_canvas, 5, 5, 175, 35, 8, "#1A1A1A", "#333333")
+        button_canvas.create_text(90, 20, text="点击访问网站", font=("Microsoft YaHei UI", 12), fill="#888888")
+    
+    def on_button_click(event):
+        open_image_link()
+    
+    # 绑定事件
+    button_canvas.bind("<Enter>", on_button_enter)
+    button_canvas.bind("<Leave>", on_button_leave)
+    button_canvas.bind("<Button-1>", on_button_click)
     
     # 添加装饰性元素
-    decoration_frame = tk.Frame(content_frame, bg='#2D2D30')
-    decoration_frame.pack(pady=15)
+    decoration_frame = tk.Frame(content_frame, bg='#000000')
+    decoration_frame.pack(pady=20)
     
-    # 创建三个深色主题装饰性圆点
-    for i, color in enumerate(['#FF6B6B', '#4ECDC4', '#45B7D1']):  # 深色主题配色
-        dot_canvas = tk.Canvas(decoration_frame, width=20, height=20, bg='#2D2D30', highlightthickness=0)
-        dot_canvas.pack(side=tk.LEFT, padx=5)
-        dot_canvas.create_oval(2, 2, 18, 18, fill=color, outline="")
+    # 创建三个柔和的装饰性圆点
+    for i, color in enumerate(['#FF5555', '#FF9933', '#5599FF']):  # 与按钮颜色保持一致
+        dot_canvas = tk.Canvas(decoration_frame, width=16, height=16, bg='#000000', highlightthickness=0)
+        dot_canvas.pack(side=tk.LEFT, padx=8)
+        dot_canvas.create_oval(2, 2, 14, 14, fill=color, outline="")
     
     # 创建倒计时提示区域，深色主题
     countdown_frame = tk.Frame(main_frame, bg='#1E1E1E')
