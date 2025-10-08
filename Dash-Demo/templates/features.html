@@ -1,0 +1,535 @@
+{% extends "base.html" %}
+
+{% block title %}功能特性 - WebflowClone{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-section text-white text-center py-5">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <h1 class="display-4 fw-bold mb-4">强大的功能特性</h1>
+                <p class="lead mb-4">探索我们的可视化网站构建平台提供的所有功能，让您轻松创建专业级网站</p>
+                <a href="{{ url_for('editor') }}" class="btn btn-light btn-lg">
+                    <i class="fas fa-rocket me-2"></i>
+                    开始使用
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- 主要功能 -->
+<section class="py-5">
+    <div class="container">
+        <div class="row text-center mb-5">
+            <div class="col-lg-8 mx-auto">
+                <h2 class="fw-bold mb-3">核心功能</h2>
+                <p class="text-muted">我们提供完整的网站构建解决方案</p>
+            </div>
+        </div>
+        
+        <div class="row g-4">
+            <div class="col-lg-4 col-md-6">
+                <div class="feature-card h-100">
+                    <div class="feature-icon">
+                        <i class="fas fa-paint-brush"></i>
+                    </div>
+                    <h4>可视化设计</h4>
+                    <p>拖拽式界面设计，无需编程知识即可创建美观的网站</p>
+                    <ul class="feature-list">
+                        <li>拖拽组件</li>
+                        <li>实时预览</li>
+                        <li>响应式设计</li>
+                        <li>自定义样式</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="col-lg-4 col-md-6">
+                <div class="feature-card h-100">
+                    <div class="feature-icon">
+                        <i class="fas fa-mobile-alt"></i>
+                    </div>
+                    <h4>响应式布局</h4>
+                    <p>自动适配各种设备屏幕，确保在任何设备上都有完美体验</p>
+                    <ul class="feature-list">
+                        <li>桌面端优化</li>
+                        <li>平板适配</li>
+                        <li>手机端友好</li>
+                        <li>跨浏览器兼容</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="col-lg-4 col-md-6">
+                <div class="feature-card h-100">
+                    <div class="feature-icon">
+                        <i class="fas fa-code"></i>
+                    </div>
+                    <h4>代码导出</h4>
+                    <p>生成干净、语义化的HTML/CSS代码，可直接部署使用</p>
+                    <ul class="feature-list">
+                        <li>HTML5标准</li>
+                        <li>CSS3样式</li>
+                        <li>JavaScript交互</li>
+                        <li>SEO优化</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="col-lg-4 col-md-6">
+                <div class="feature-card h-100">
+                    <div class="feature-icon">
+                        <i class="fas fa-layer-group"></i>
+                    </div>
+                    <h4>丰富组件库</h4>
+                    <p>提供各种预制组件，快速构建复杂页面布局</p>
+                    <ul class="feature-list">
+                        <li>基础组件</li>
+                        <li>布局组件</li>
+                        <li>表单组件</li>
+                        <li>媒体组件</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="col-lg-4 col-md-6">
+                <div class="feature-card h-100">
+                    <div class="feature-icon">
+                        <i class="fas fa-palette"></i>
+                    </div>
+                    <h4>主题模板</h4>
+                    <p>精美的预设计模板，为不同行业提供专业解决方案</p>
+                    <ul class="feature-list">
+                        <li>商业模板</li>
+                        <li>作品集模板</li>
+                        <li>博客模板</li>
+                        <li>电商模板</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="col-lg-4 col-md-6">
+                <div class="feature-card h-100">
+                    <div class="feature-icon">
+                        <i class="fas fa-cloud"></i>
+                    </div>
+                    <h4>云端托管</h4>
+                    <p>一键发布到云端，享受快速、稳定的网站托管服务</p>
+                    <ul class="feature-list">
+                        <li>全球CDN</li>
+                        <li>SSL证书</li>
+                        <li>自动备份</li>
+                        <li>性能监控</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- 工作流程 -->
+<section class="py-5 bg-light">
+    <div class="container">
+        <div class="row text-center mb-5">
+            <div class="col-lg-8 mx-auto">
+                <h2 class="fw-bold mb-3">简单的工作流程</h2>
+                <p class="text-muted">只需四个步骤，即可创建专业网站</p>
+            </div>
+        </div>
+        
+        <div class="row g-4">
+            <div class="col-lg-3 col-md-6">
+                <div class="workflow-step text-center">
+                    <div class="step-number">1</div>
+                    <div class="step-icon">
+                        <i class="fas fa-plus"></i>
+                    </div>
+                    <h5>选择模板</h5>
+                    <p>从我们的模板库中选择适合的设计，或从空白页面开始</p>
+                </div>
+            </div>
+            
+            <div class="col-lg-3 col-md-6">
+                <div class="workflow-step text-center">
+                    <div class="step-number">2</div>
+                    <div class="step-icon">
+                        <i class="fas fa-edit"></i>
+                    </div>
+                    <h5>自定义设计</h5>
+                    <p>使用拖拽编辑器调整布局、颜色、字体和内容</p>
+                </div>
+            </div>
+            
+            <div class="col-lg-3 col-md-6">
+                <div class="workflow-step text-center">
+                    <div class="step-number">3</div>
+                    <div class="step-icon">
+                        <i class="fas fa-eye"></i>
+                    </div>
+                    <h5>预览测试</h5>
+                    <p>在不同设备上预览您的网站，确保完美显示</p>
+                </div>
+            </div>
+            
+            <div class="col-lg-3 col-md-6">
+                <div class="workflow-step text-center">
+                    <div class="step-number">4</div>
+                    <div class="step-icon">
+                        <i class="fas fa-rocket"></i>
+                    </div>
+                    <h5>发布上线</h5>
+                    <p>一键发布到云端，让全世界都能访问您的网站</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- 技术特性 -->
+<section class="py-5">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-6">
+                <h2 class="fw-bold mb-4">先进的技术架构</h2>
+                <p class="text-muted mb-4">我们使用最新的Web技术，确保您的网站快速、安全、可靠</p>
+                
+                <div class="tech-features">
+                    <div class="tech-feature d-flex align-items-start mb-3">
+                        <div class="tech-icon me-3">
+                            <i class="fas fa-bolt text-warning"></i>
+                        </div>
+                        <div>
+                            <h6 class="fw-bold mb-1">极速加载</h6>
+                            <p class="text-muted mb-0">优化的代码和CDN加速，确保页面快速加载</p>
+                        </div>
+                    </div>
+                    
+                    <div class="tech-feature d-flex align-items-start mb-3">
+                        <div class="tech-icon me-3">
+                            <i class="fas fa-shield-alt text-success"></i>
+                        </div>
+                        <div>
+                            <h6 class="fw-bold mb-1">安全可靠</h6>
+                            <p class="text-muted mb-0">SSL加密、安全托管，保护您的网站和用户数据</p>
+                        </div>
+                    </div>
+                    
+                    <div class="tech-feature d-flex align-items-start mb-3">
+                        <div class="tech-icon me-3">
+                            <i class="fas fa-search text-primary"></i>
+                        </div>
+                        <div>
+                            <h6 class="fw-bold mb-1">SEO优化</h6>
+                            <p class="text-muted mb-0">自动生成SEO友好的代码，提高搜索引擎排名</p>
+                        </div>
+                    </div>
+                    
+                    <div class="tech-feature d-flex align-items-start">
+                        <div class="tech-icon me-3">
+                            <i class="fas fa-chart-line text-info"></i>
+                        </div>
+                        <div>
+                            <h6 class="fw-bold mb-1">数据分析</h6>
+                            <p class="text-muted mb-0">内置分析工具，了解网站访问情况和用户行为</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-6">
+                <div class="tech-showcase">
+                    <div class="code-preview">
+                        <div class="code-header">
+                            <div class="code-dots">
+                                <span></span>
+                                <span></span>
+                                <span></span>
+                            </div>
+                            <span class="code-title">生成的代码</span>
+                        </div>
+                        <div class="code-content">
+                            <pre><code>&lt;!DOCTYPE html&gt;
+&lt;html lang="zh-CN"&gt;
+&lt;head&gt;
+    &lt;meta charset="UTF-8"&gt;
+    &lt;meta name="viewport" content="width=device-width, initial-scale=1.0"&gt;
+    &lt;title&gt;我的网站&lt;/title&gt;
+    &lt;link rel="stylesheet" href="styles.css"&gt;
+&lt;/head&gt;
+&lt;body&gt;
+    &lt;header class="header"&gt;
+        &lt;nav class="navbar"&gt;
+            &lt;div class="container"&gt;
+                &lt;a href="#" class="logo"&gt;Logo&lt;/a&gt;
+                &lt;ul class="nav-menu"&gt;
+                    &lt;li&gt;&lt;a href="#"&gt;首页&lt;/a&gt;&lt;/li&gt;
+                    &lt;li&gt;&lt;a href="#"&gt;关于&lt;/a&gt;&lt;/li&gt;
+                    &lt;li&gt;&lt;a href="#"&gt;联系&lt;/a&gt;&lt;/li&gt;
+                &lt;/ul&gt;
+            &lt;/div&gt;
+        &lt;/nav&gt;
+    &lt;/header&gt;
+&lt;/body&gt;
+&lt;/html&gt;</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA Section -->
+<section class="py-5 bg-primary text-white">
+    <div class="container text-center">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <h2 class="fw-bold mb-3">准备开始创建您的网站了吗？</h2>
+                <p class="lead mb-4">加入数千名用户，使用我们的平台创建专业网站</p>
+                <div class="d-flex gap-3 justify-content-center flex-wrap">
+                    <a href="{{ url_for('templates') }}" class="btn btn-light btn-lg">
+                        <i class="fas fa-th-large me-2"></i>
+                        浏览模板
+                    </a>
+                    <a href="{{ url_for('editor') }}" class="btn btn-outline-light btn-lg">
+                        <i class="fas fa-plus me-2"></i>
+                        从空白开始
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.feature-card {
+    background: white;
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+    border: 1px solid #f0f0f0;
+}
+
+.feature-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 30px rgba(102, 126, 234, 0.2);
+}
+
+.feature-icon {
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1.5rem;
+}
+
+.feature-icon i {
+    font-size: 1.5rem;
+    color: white;
+}
+
+.feature-card h4 {
+    color: #2d3748;
+    margin-bottom: 1rem;
+}
+
+.feature-card p {
+    color: #718096;
+    margin-bottom: 1.5rem;
+}
+
+.feature-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.feature-list li {
+    padding: 0.5rem 0;
+    color: #4a5568;
+    position: relative;
+    padding-left: 1.5rem;
+}
+
+.feature-list li::before {
+    content: '✓';
+    position: absolute;
+    left: 0;
+    color: var(--success-color);
+    font-weight: bold;
+}
+
+.workflow-step {
+    position: relative;
+    padding: 2rem 1rem;
+}
+
+.step-number {
+    position: absolute;
+    top: -15px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 30px;
+    height: 30px;
+    background: var(--primary-color);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 0.9rem;
+}
+
+.step-icon {
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(135deg, #f7fafc, #edf2f7);
+    border: 3px solid var(--primary-color);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1.5rem;
+}
+
+.step-icon i {
+    font-size: 1.8rem;
+    color: var(--primary-color);
+}
+
+.workflow-step h5 {
+    color: #2d3748;
+    margin-bottom: 1rem;
+}
+
+.workflow-step p {
+    color: #718096;
+    font-size: 0.9rem;
+}
+
+.tech-icon {
+    width: 40px;
+    height: 40px;
+    background: #f7fafc;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.tech-showcase {
+    position: relative;
+}
+
+.code-preview {
+    background: #1a202c;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+}
+
+.code-header {
+    background: #2d3748;
+    padding: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.code-dots {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.code-dots span {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #4a5568;
+}
+
+.code-dots span:nth-child(1) { background: #f56565; }
+.code-dots span:nth-child(2) { background: #ed8936; }
+.code-dots span:nth-child(3) { background: #48bb78; }
+
+.code-title {
+    color: #a0aec0;
+    font-size: 0.9rem;
+}
+
+.code-content {
+    padding: 1.5rem;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.code-content pre {
+    margin: 0;
+    color: #e2e8f0;
+    font-family: 'Fira Code', 'Monaco', 'Consolas', monospace;
+    font-size: 0.85rem;
+    line-height: 1.6;
+}
+
+.code-content code {
+    color: inherit;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+    .feature-card {
+        padding: 1.5rem;
+    }
+    
+    .workflow-step {
+        padding: 1.5rem 0.5rem;
+    }
+    
+    .step-icon {
+        width: 60px;
+        height: 60px;
+    }
+    
+    .step-icon i {
+        font-size: 1.4rem;
+    }
+    
+    .code-content {
+        font-size: 0.75rem;
+    }
+}
+
+/* 动画效果 */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.feature-card,
+.workflow-step {
+    animation: fadeInUp 0.6s ease-out;
+}
+
+.feature-card:nth-child(2) { animation-delay: 0.1s; }
+.feature-card:nth-child(3) { animation-delay: 0.2s; }
+.workflow-step:nth-child(2) { animation-delay: 0.1s; }
+.workflow-step:nth-child(3) { animation-delay: 0.2s; }
+.workflow-step:nth-child(4) { animation-delay: 0.3s; }
+</style>
+{% endblock %}
+{% endblock %}

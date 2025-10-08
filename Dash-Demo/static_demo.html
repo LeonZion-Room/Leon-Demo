@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🌟 静态页面演示</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.2);
+        }
+
+        .card-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            display: block;
+        }
+
+        .card h3 {
+            color: #4a5568;
+            margin-bottom: 15px;
+            font-size: 1.5rem;
+        }
+
+        .card p {
+            color: #718096;
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+
+        .progress-bar {
+            background: #e2e8f0;
+            border-radius: 10px;
+            height: 8px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4299e1, #3182ce);
+            border-radius: 10px;
+            transition: width 2s ease;
+        }
+
+        .stats-container {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 40px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 20px;
+            background: #f7fafc;
+            border-radius: 10px;
+        }
+
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #4299e1;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            color: #718096;
+            font-size: 0.9rem;
+        }
+
+        .interactive-section {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            margin-bottom: 40px;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .btn-primary {
+            background: #4299e1;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #3182ce;
+            transform: translateY(-2px);
+        }
+
+        .btn-success {
+            background: #48bb78;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #38a169;
+            transform: translateY(-2px);
+        }
+
+        .btn-warning {
+            background: #ed8936;
+            color: white;
+        }
+
+        .btn-warning:hover {
+            background: #dd6b20;
+            transform: translateY(-2px);
+        }
+
+        .output-area {
+            background: #f7fafc;
+            border-radius: 8px;
+            padding: 20px;
+            min-height: 100px;
+            border-left: 4px solid #4299e1;
+            font-family: 'Courier New', monospace;
+        }
+
+        .footer {
+            text-align: center;
+            color: white;
+            padding: 20px;
+            opacity: 0.8;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-in {
+            animation: fadeInUp 0.6s ease forwards;
+        }
+
+        .chart-container {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 40px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .chart {
+            width: 100%;
+            height: 300px;
+            background: #f7fafc;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            color: #718096;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .chart-bars {
+            display: flex;
+            align-items: end;
+            height: 200px;
+            gap: 10px;
+            margin: 20px;
+        }
+
+        .chart-bar {
+            background: linear-gradient(to top, #4299e1, #63b3ed);
+            border-radius: 4px 4px 0 0;
+            min-width: 30px;
+            transition: height 2s ease;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 头部 -->
+        <div class="header animate-in">
+            <h1>🌟 静态页面演示</h1>
+            <p>纯HTML + CSS + JavaScript 实现的交互式页面</p>
+        </div>
+
+        <!-- 功能卡片 -->
+        <div class="card-grid">
+            <div class="card animate-in" style="animation-delay: 0.1s">
+                <span class="card-icon">🚀</span>
+                <h3>快速加载</h3>
+                <p>静态页面无需服务器处理，加载速度极快，用户体验优秀。</p>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: 95%"></div>
+                </div>
+                <small>加载速度: 95%</small>
+            </div>
+
+            <div class="card animate-in" style="animation-delay: 0.2s">
+                <span class="card-icon">💰</span>
+                <h3>成本低廉</h3>
+                <p>无需复杂的后端服务器，可以部署在任何静态托管服务上。</p>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: 90%"></div>
+                </div>
+                <small>成本节省: 90%</small>
+            </div>
+
+            <div class="card animate-in" style="animation-delay: 0.3s">
+                <span class="card-icon">🔒</span>
+                <h3>安全可靠</h3>
+                <p>没有服务器端代码，减少了安全漏洞的风险。</p>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: 88%"></div>
+                </div>
+                <small>安全性: 88%</small>
+            </div>
+
+            <div class="card animate-in" style="animation-delay: 0.4s">
+                <span class="card-icon">📱</span>
+                <h3>响应式设计</h3>
+                <p>完美适配各种设备，从手机到桌面电脑都有良好体验。</p>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: 92%"></div>
+                </div>
+                <small>兼容性: 92%</small>
+            </div>
+        </div>
+
+        <!-- 统计数据 -->
+        <div class="stats-container animate-in" style="animation-delay: 0.5s">
+            <h2 style="text-align: center; margin-bottom: 30px; color: #4a5568;">📊 项目统计</h2>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-number" id="visitors">0</div>
+                    <div class="stat-label">今日访问</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number" id="projects">0</div>
+                    <div class="stat-label">完成项目</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number" id="satisfaction">0%</div>
+                    <div class="stat-label">客户满意度</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number" id="uptime">0%</div>
+                    <div class="stat-label">系统稳定性</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 交互式功能 -->
+        <div class="interactive-section animate-in" style="animation-delay: 0.6s">
+            <h2 style="margin-bottom: 20px; color: #4a5568;">🎮 交互式功能演示</h2>
+            <div class="button-group">
+                <button class="btn btn-primary" onclick="showMessage('primary')">📝 显示信息</button>
+                <button class="btn btn-success" onclick="showMessage('success')">✅ 成功消息</button>
+                <button class="btn btn-warning" onclick="showMessage('warning')">⚠️ 警告消息</button>
+                <button class="btn btn-primary" onclick="generateChart()">📊 生成图表</button>
+                <button class="btn btn-success" onclick="animateStats()">🔄 刷新统计</button>
+            </div>
+            <div class="output-area" id="output">
+                点击上方按钮查看交互效果...
+            </div>
+        </div>
+
+        <!-- 图表展示 -->
+        <div class="chart-container animate-in" style="animation-delay: 0.7s">
+            <h2 style="margin-bottom: 20px; color: #4a5568;">📈 数据可视化</h2>
+            <div class="chart" id="chart">
+                <div class="chart-bars" id="chartBars">
+                    <div class="chart-bar" style="height: 60px;"></div>
+                    <div class="chart-bar" style="height: 80px;"></div>
+                    <div class="chart-bar" style="height: 45px;"></div>
+                    <div class="chart-bar" style="height: 90px;"></div>
+                    <div class="chart-bar" style="height: 70px;"></div>
+                    <div class="chart-bar" style="height: 55px;"></div>
+                    <div class="chart-bar" style="height: 85px;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 页脚 -->
+        <div class="footer animate-in" style="animation-delay: 0.8s">
+            <p>© 2024 静态页面演示 | 使用纯HTML、CSS和JavaScript构建</p>
+        </div>
+    </div>
+
+    <script>
+        // 数字动画函数
+        function animateNumber(element, start, end, duration) {
+            const startTime = performance.now();
+            const range = end - start;
+
+            function updateNumber(currentTime) {
+                const elapsed = currentTime - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                const current = Math.floor(start + (range * progress));
+                
+                if (element.id === 'satisfaction' || element.id === 'uptime') {
+                    element.textContent = current + '%';
+                } else {
+                    element.textContent = current.toLocaleString();
+                }
+
+                if (progress < 1) {
+                    requestAnimationFrame(updateNumber);
+                }
+            }
+
+            requestAnimationFrame(updateNumber);
+        }
+
+        // 显示消息函数
+        function showMessage(type) {
+            const output = document.getElementById('output');
+            const timestamp = new Date().toLocaleTimeString();
+            
+            let message = '';
+            switch(type) {
+                case 'primary':
+                    message = `📝 [${timestamp}] 这是一个信息消息 - 静态页面可以实现丰富的交互功能！`;
+                    break;
+                case 'success':
+                    message = `✅ [${timestamp}] 操作成功！静态页面运行正常。`;
+                    break;
+                case 'warning':
+                    message = `⚠️ [${timestamp}] 注意：这只是一个演示警告消息。`;
+                    break;
+            }
+            
+            output.innerHTML = message;
+            output.style.animation = 'fadeInUp 0.5s ease';
+        }
+
+        // 生成随机图表
+        function generateChart() {
+            const bars = document.querySelectorAll('.chart-bar');
+            bars.forEach(bar => {
+                const height = Math.random() * 180 + 20;
+                bar.style.height = height + 'px';
+            });
+            
+            showMessage('primary');
+            document.getElementById('output').innerHTML = `📊 [${new Date().toLocaleTimeString()}] 图表已更新！显示了7个随机数据点。`;
+        }
+
+        // 刷新统计数据
+        function animateStats() {
+            animateNumber(document.getElementById('visitors'), 0, Math.floor(Math.random() * 1000) + 500, 2000);
+            animateNumber(document.getElementById('projects'), 0, Math.floor(Math.random() * 50) + 20, 2000);
+            animateNumber(document.getElementById('satisfaction'), 0, Math.floor(Math.random() * 20) + 80, 2000);
+            animateNumber(document.getElementById('uptime'), 0, Math.floor(Math.random() * 5) + 95, 2000);
+            
+            showMessage('success');
+            document.getElementById('output').innerHTML = `🔄 [${new Date().toLocaleTimeString()}] 统计数据已刷新！`;
+        }
+
+        // 页面加载完成后的初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            // 初始化统计数据
+            setTimeout(() => {
+                animateNumber(document.getElementById('visitors'), 0, 1247, 2000);
+                animateNumber(document.getElementById('projects'), 0, 42, 2000);
+                animateNumber(document.getElementById('satisfaction'), 0, 96, 2000);
+                animateNumber(document.getElementById('uptime'), 0, 99, 2000);
+            }, 1000);
+
+            // 添加滚动动画
+            const observerOptions = {
+                threshold: 0.1,
+                rootMargin: '0px 0px -50px 0px'
+            };
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.style.opacity = '1';
+                        entry.target.style.transform = 'translateY(0)';
+                    }
+                });
+            }, observerOptions);
+
+            // 观察所有动画元素
+            document.querySelectorAll('.animate-in').forEach(el => {
+                observer.observe(el);
+            });
+
+            // 欢迎消息
+            setTimeout(() => {
+                document.getElementById('output').innerHTML = '🎉 欢迎来到静态页面演示！这个页面展示了纯前端技术的强大功能。';
+            }, 2000);
+        });
+
+        // 添加一些交互效果
+        document.querySelectorAll('.card').forEach(card => {
+            card.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-10px) scale(1.02)';
+            });
+            
+            card.addEventListener('mouseleave', function() {
+                this.style.transform = 'translateY(0) scale(1)';
+            });
+        });
+    </script>
+</body>
+</html>

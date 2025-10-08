@@ -1,0 +1,673 @@
+{% extends "base.html" %}
+
+{% block title %}定价方案 - WebflowClone{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-section text-white text-center py-5">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <h1 class="display-4 fw-bold mb-4">选择适合您的方案</h1>
+                <p class="lead mb-4">从个人项目到企业级应用，我们为每个需求提供完美的解决方案</p>
+                
+                <!-- 计费周期切换 -->
+                <div class="billing-toggle d-flex align-items-center justify-content-center gap-3 mb-4">
+                    <span class="billing-label">月付</span>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="billingSwitch" onchange="toggleBilling()">
+                        <label class="form-check-label" for="billingSwitch"></label>
+                    </div>
+                    <span class="billing-label">年付 <span class="badge bg-success ms-1">省20%</span></span>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- 定价方案 -->
+<section class="py-5">
+    <div class="container">
+        <div class="row g-4 justify-content-center">
+            <!-- 免费方案 -->
+            <div class="col-lg-4 col-md-6">
+                <div class="pricing-card h-100">
+                    <div class="pricing-header">
+                        <h3 class="plan-name">免费版</h3>
+                        <p class="plan-description">适合个人学习和小型项目</p>
+                        <div class="price-display">
+                            <span class="currency">¥</span>
+                            <span class="price monthly-price">0</span>
+                            <span class="price yearly-price" style="display: none;">0</span>
+                            <span class="period">/月</span>
+                        </div>
+                    </div>
+                    
+                    <div class="pricing-features">
+                        <ul class="feature-list">
+                            <li><i class="fas fa-check"></i> 最多 2 个项目</li>
+                            <li><i class="fas fa-check"></i> 基础模板库</li>
+                            <li><i class="fas fa-check"></i> 标准组件</li>
+                            <li><i class="fas fa-check"></i> 社区支持</li>
+                            <li><i class="fas fa-check"></i> WebflowClone 子域名</li>
+                            <li class="unavailable"><i class="fas fa-times"></i> 自定义域名</li>
+                            <li class="unavailable"><i class="fas fa-times"></i> 高级组件</li>
+                            <li class="unavailable"><i class="fas fa-times"></i> 代码导出</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="pricing-footer">
+                        <a href="{{ url_for('dashboard') }}" class="btn btn-outline-primary w-100">
+                            开始使用
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 专业版 -->
+            <div class="col-lg-4 col-md-6">
+                <div class="pricing-card popular h-100">
+                    <div class="popular-badge">
+                        <span>最受欢迎</span>
+                    </div>
+                    
+                    <div class="pricing-header">
+                        <h3 class="plan-name">专业版</h3>
+                        <p class="plan-description">适合专业设计师和小团队</p>
+                        <div class="price-display">
+                            <span class="currency">¥</span>
+                            <span class="price monthly-price">99</span>
+                            <span class="price yearly-price" style="display: none;">79</span>
+                            <span class="period">/月</span>
+                        </div>
+                        <div class="yearly-savings" style="display: none;">
+                            <small class="text-success">年付节省 ¥240</small>
+                        </div>
+                    </div>
+                    
+                    <div class="pricing-features">
+                        <ul class="feature-list">
+                            <li><i class="fas fa-check"></i> 无限项目</li>
+                            <li><i class="fas fa-check"></i> 完整模板库</li>
+                            <li><i class="fas fa-check"></i> 高级组件库</li>
+                            <li><i class="fas fa-check"></i> 优先技术支持</li>
+                            <li><i class="fas fa-check"></i> 自定义域名</li>
+                            <li><i class="fas fa-check"></i> 代码导出</li>
+                            <li><i class="fas fa-check"></i> 团队协作 (5人)</li>
+                            <li><i class="fas fa-check"></i> 高级分析</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="pricing-footer">
+                        <a href="#" class="btn btn-primary w-100">
+                            选择专业版
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 企业版 -->
+            <div class="col-lg-4 col-md-6">
+                <div class="pricing-card h-100">
+                    <div class="pricing-header">
+                        <h3 class="plan-name">企业版</h3>
+                        <p class="plan-description">适合大型团队和企业</p>
+                        <div class="price-display">
+                            <span class="currency">¥</span>
+                            <span class="price monthly-price">299</span>
+                            <span class="price yearly-price" style="display: none;">239</span>
+                            <span class="period">/月</span>
+                        </div>
+                        <div class="yearly-savings" style="display: none;">
+                            <small class="text-success">年付节省 ¥720</small>
+                        </div>
+                    </div>
+                    
+                    <div class="pricing-features">
+                        <ul class="feature-list">
+                            <li><i class="fas fa-check"></i> 专业版所有功能</li>
+                            <li><i class="fas fa-check"></i> 无限团队成员</li>
+                            <li><i class="fas fa-check"></i> 高级权限管理</li>
+                            <li><i class="fas fa-check"></i> 专属客户经理</li>
+                            <li><i class="fas fa-check"></i> SLA 保障</li>
+                            <li><i class="fas fa-check"></i> 白标解决方案</li>
+                            <li><i class="fas fa-check"></i> API 访问</li>
+                            <li><i class="fas fa-check"></i> 定制开发支持</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="pricing-footer">
+                        <a href="#" class="btn btn-outline-primary w-100">
+                            联系销售
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- 功能对比表 -->
+<section class="py-5 bg-light">
+    <div class="container">
+        <div class="row text-center mb-5">
+            <div class="col-lg-8 mx-auto">
+                <h2 class="fw-bold mb-3">详细功能对比</h2>
+                <p class="text-muted">了解每个方案包含的具体功能</p>
+            </div>
+        </div>
+        
+        <div class="table-responsive">
+            <table class="table comparison-table">
+                <thead>
+                    <tr>
+                        <th scope="col" class="feature-col">功能</th>
+                        <th scope="col" class="plan-col">免费版</th>
+                        <th scope="col" class="plan-col popular-col">专业版</th>
+                        <th scope="col" class="plan-col">企业版</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="feature-name">项目数量</td>
+                        <td>2个</td>
+                        <td>无限</td>
+                        <td>无限</td>
+                    </tr>
+                    <tr>
+                        <td class="feature-name">模板库</td>
+                        <td>基础模板</td>
+                        <td>完整模板库</td>
+                        <td>完整模板库</td>
+                    </tr>
+                    <tr>
+                        <td class="feature-name">组件库</td>
+                        <td>标准组件</td>
+                        <td>高级组件</td>
+                        <td>高级组件</td>
+                    </tr>
+                    <tr>
+                        <td class="feature-name">自定义域名</td>
+                        <td><i class="fas fa-times text-danger"></i></td>
+                        <td><i class="fas fa-check text-success"></i></td>
+                        <td><i class="fas fa-check text-success"></i></td>
+                    </tr>
+                    <tr>
+                        <td class="feature-name">代码导出</td>
+                        <td><i class="fas fa-times text-danger"></i></td>
+                        <td><i class="fas fa-check text-success"></i></td>
+                        <td><i class="fas fa-check text-success"></i></td>
+                    </tr>
+                    <tr>
+                        <td class="feature-name">团队协作</td>
+                        <td><i class="fas fa-times text-danger"></i></td>
+                        <td>5人</td>
+                        <td>无限</td>
+                    </tr>
+                    <tr>
+                        <td class="feature-name">技术支持</td>
+                        <td>社区支持</td>
+                        <td>优先支持</td>
+                        <td>专属客户经理</td>
+                    </tr>
+                    <tr>
+                        <td class="feature-name">存储空间</td>
+                        <td>1GB</td>
+                        <td>50GB</td>
+                        <td>500GB</td>
+                    </tr>
+                    <tr>
+                        <td class="feature-name">带宽</td>
+                        <td>10GB/月</td>
+                        <td>500GB/月</td>
+                        <td>无限</td>
+                    </tr>
+                    <tr>
+                        <td class="feature-name">SSL证书</td>
+                        <td><i class="fas fa-check text-success"></i></td>
+                        <td><i class="fas fa-check text-success"></i></td>
+                        <td><i class="fas fa-check text-success"></i></td>
+                    </tr>
+                    <tr>
+                        <td class="feature-name">API访问</td>
+                        <td><i class="fas fa-times text-danger"></i></td>
+                        <td><i class="fas fa-times text-danger"></i></td>
+                        <td><i class="fas fa-check text-success"></i></td>
+                    </tr>
+                    <tr>
+                        <td class="feature-name">白标解决方案</td>
+                        <td><i class="fas fa-times text-danger"></i></td>
+                        <td><i class="fas fa-times text-danger"></i></td>
+                        <td><i class="fas fa-check text-success"></i></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>
+
+<!-- FAQ -->
+<section class="py-5">
+    <div class="container">
+        <div class="row text-center mb-5">
+            <div class="col-lg-8 mx-auto">
+                <h2 class="fw-bold mb-3">常见问题</h2>
+                <p class="text-muted">关于定价和功能的常见问题解答</p>
+            </div>
+        </div>
+        
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="accordion" id="faqAccordion">
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#faq1">
+                                可以随时升级或降级方案吗？
+                            </button>
+                        </h2>
+                        <div id="faq1" class="accordion-collapse collapse show" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                是的，您可以随时升级或降级您的方案。升级立即生效，降级将在当前计费周期结束后生效。
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq2">
+                                是否提供免费试用？
+                            </button>
+                        </h2>
+                        <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                专业版和企业版都提供14天免费试用，无需信用卡。试用期结束后可以选择继续付费或降级到免费版。
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq3">
+                                支持哪些支付方式？
+                            </button>
+                        </h2>
+                        <div id="faq3" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                我们支持信用卡、借记卡、支付宝、微信支付等多种支付方式。企业用户还可以选择银行转账。
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq4">
+                                取消订阅后数据会怎样？
+                            </button>
+                        </h2>
+                        <div id="faq4" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                取消订阅后，您的项目数据会保留30天。在此期间您可以重新订阅恢复访问，或导出您的数据。
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq5">
+                                企业版是否支持定制功能？
+                            </button>
+                        </h2>
+                        <div id="faq5" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                是的，企业版用户可以申请定制功能开发。我们的技术团队会根据您的需求提供专门的解决方案。
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA Section -->
+<section class="py-5 bg-primary text-white">
+    <div class="container text-center">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <h2 class="fw-bold mb-3">准备开始了吗？</h2>
+                <p class="lead mb-4">选择适合您的方案，立即开始创建专业网站</p>
+                <div class="d-flex gap-3 justify-content-center flex-wrap">
+                    <a href="{{ url_for('dashboard') }}" class="btn btn-light btn-lg">
+                        <i class="fas fa-rocket me-2"></i>
+                        免费开始
+                    </a>
+                    <a href="#" class="btn btn-outline-light btn-lg">
+                        <i class="fas fa-phone me-2"></i>
+                        联系销售
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.billing-toggle {
+    background: rgba(255,255,255,0.1);
+    padding: 1rem;
+    border-radius: 50px;
+    backdrop-filter: blur(10px);
+}
+
+.billing-label {
+    color: rgba(255,255,255,0.9);
+    font-weight: 500;
+}
+
+.form-check-input:checked {
+    background-color: #48bb78;
+    border-color: #48bb78;
+}
+
+.pricing-card {
+    background: white;
+    border-radius: 16px;
+    padding: 2rem;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+    position: relative;
+    border: 2px solid transparent;
+}
+
+.pricing-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 30px rgba(102, 126, 234, 0.2);
+}
+
+.pricing-card.popular {
+    border-color: var(--primary-color);
+    transform: scale(1.05);
+}
+
+.pricing-card.popular:hover {
+    transform: scale(1.05) translateY(-5px);
+}
+
+.popular-badge {
+    position: absolute;
+    top: -12px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    color: white;
+    padding: 0.5rem 1.5rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.pricing-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.plan-name {
+    color: #2d3748;
+    margin-bottom: 0.5rem;
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+.plan-description {
+    color: #718096;
+    margin-bottom: 1.5rem;
+    font-size: 0.95rem;
+}
+
+.price-display {
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    margin-bottom: 0.5rem;
+}
+
+.currency {
+    font-size: 1.2rem;
+    color: #4a5568;
+    margin-right: 0.25rem;
+}
+
+.price {
+    font-size: 3rem;
+    font-weight: 700;
+    color: var(--primary-color);
+    line-height: 1;
+}
+
+.period {
+    font-size: 1rem;
+    color: #718096;
+    margin-left: 0.25rem;
+}
+
+.yearly-savings {
+    height: 20px;
+}
+
+.pricing-features {
+    margin-bottom: 2rem;
+}
+
+.feature-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.feature-list li {
+    padding: 0.75rem 0;
+    display: flex;
+    align-items: center;
+    color: #4a5568;
+    border-bottom: 1px solid #f7fafc;
+}
+
+.feature-list li:last-child {
+    border-bottom: none;
+}
+
+.feature-list li i {
+    margin-right: 0.75rem;
+    width: 16px;
+    color: var(--success-color);
+}
+
+.feature-list li.unavailable {
+    color: #a0aec0;
+}
+
+.feature-list li.unavailable i {
+    color: #e53e3e;
+}
+
+.comparison-table {
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+}
+
+.comparison-table th {
+    background: #f7fafc;
+    border: none;
+    padding: 1.5rem 1rem;
+    font-weight: 600;
+    color: #2d3748;
+}
+
+.comparison-table td {
+    padding: 1rem;
+    border-color: #f7fafc;
+    vertical-align: middle;
+}
+
+.feature-col {
+    width: 40%;
+}
+
+.plan-col {
+    width: 20%;
+    text-align: center;
+}
+
+.popular-col {
+    background: rgba(102, 126, 234, 0.05);
+    position: relative;
+}
+
+.feature-name {
+    font-weight: 500;
+    color: #2d3748;
+}
+
+.accordion-item {
+    border: none;
+    margin-bottom: 1rem;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.accordion-button {
+    background: white;
+    border: none;
+    padding: 1.5rem;
+    font-weight: 500;
+    color: #2d3748;
+}
+
+.accordion-button:not(.collapsed) {
+    background: var(--primary-color);
+    color: white;
+    box-shadow: none;
+}
+
+.accordion-button:focus {
+    box-shadow: none;
+    border: none;
+}
+
+.accordion-body {
+    padding: 1.5rem;
+    color: #4a5568;
+    line-height: 1.6;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+    .pricing-card {
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .pricing-card.popular {
+        transform: none;
+    }
+    
+    .pricing-card.popular:hover {
+        transform: translateY(-5px);
+    }
+    
+    .price {
+        font-size: 2.5rem;
+    }
+    
+    .billing-toggle {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .comparison-table {
+        font-size: 0.9rem;
+    }
+    
+    .feature-col {
+        width: 50%;
+    }
+    
+    .plan-col {
+        width: 16.67%;
+    }
+}
+
+/* 动画效果 */
+@keyframes slideInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.pricing-card {
+    animation: slideInUp 0.6s ease-out;
+}
+
+.pricing-card:nth-child(2) { animation-delay: 0.1s; }
+.pricing-card:nth-child(3) { animation-delay: 0.2s; }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function toggleBilling() {
+    const isYearly = document.getElementById('billingSwitch').checked;
+    const monthlyPrices = document.querySelectorAll('.monthly-price');
+    const yearlyPrices = document.querySelectorAll('.yearly-price');
+    const yearlySavings = document.querySelectorAll('.yearly-savings');
+    
+    if (isYearly) {
+        monthlyPrices.forEach(price => price.style.display = 'none');
+        yearlyPrices.forEach(price => price.style.display = 'inline');
+        yearlySavings.forEach(saving => saving.style.display = 'block');
+    } else {
+        monthlyPrices.forEach(price => price.style.display = 'inline');
+        yearlyPrices.forEach(price => price.style.display = 'none');
+        yearlySavings.forEach(saving => saving.style.display = 'none');
+    }
+}
+
+// 平滑滚动到定价表
+function scrollToPricing() {
+    document.querySelector('.pricing-card').scrollIntoView({
+        behavior: 'smooth'
+    });
+}
+
+// 添加页面加载动画
+document.addEventListener('DOMContentLoaded', function() {
+    const cards = document.querySelectorAll('.pricing-card');
+    
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.style.opacity = '1';
+                entry.target.style.transform = 'translateY(0)';
+            }
+        });
+    });
+    
+    cards.forEach(card => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(30px)';
+        card.style.transition = 'all 0.6s ease-out';
+        observer.observe(card);
+    });
+});
+</script>
+{% endblock %}

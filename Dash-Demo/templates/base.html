@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Webflow Clone - 可视化网站构建器{% endblock %}</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- 自定义CSS -->
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm fixed-top">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="{{ url_for('index') }}">
+                <i class="fas fa-cube text-primary me-2"></i>
+                WebflowClone
+            </a>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('features') }}">功能</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('templates') }}">模板</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('pricing') }}">价格</a>
+                    </li>
+                </ul>
+                
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('dashboard') }}">
+                            <i class="fas fa-tachometer-alt me-1"></i>
+                            仪表板
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="btn btn-primary ms-2" href="{{ url_for('create_project') }}">
+                            <i class="fas fa-plus me-1"></i>
+                            创建项目
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主要内容 -->
+    <main style="padding-top: 76px;">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- 页脚 -->
+    <footer class="bg-dark text-light py-5 mt-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-4">
+                    <h5 class="fw-bold mb-3">
+                        <i class="fas fa-cube text-primary me-2"></i>
+                        WebflowClone
+                    </h5>
+                    <p class="text-muted">
+                        强大的可视化网站构建器，让每个人都能创建专业的网站。
+                    </p>
+                </div>
+                
+                <div class="col-md-2">
+                    <h6 class="fw-bold mb-3">产品</h6>
+                    <ul class="list-unstyled">
+                        <li><a href="{{ url_for('features') }}" class="text-muted text-decoration-none">功能</a></li>
+                        <li><a href="{{ url_for('templates') }}" class="text-muted text-decoration-none">模板</a></li>
+                        <li><a href="{{ url_for('pricing') }}" class="text-muted text-decoration-none">价格</a></li>
+                    </ul>
+                </div>
+                
+                <div class="col-md-2">
+                    <h6 class="fw-bold mb-3">资源</h6>
+                    <ul class="list-unstyled">
+                        <li><a href="#" class="text-muted text-decoration-none">帮助中心</a></li>
+                        <li><a href="#" class="text-muted text-decoration-none">教程</a></li>
+                        <li><a href="#" class="text-muted text-decoration-none">社区</a></li>
+                    </ul>
+                </div>
+                
+                <div class="col-md-2">
+                    <h6 class="fw-bold mb-3">公司</h6>
+                    <ul class="list-unstyled">
+                        <li><a href="#" class="text-muted text-decoration-none">关于我们</a></li>
+                        <li><a href="#" class="text-muted text-decoration-none">联系我们</a></li>
+                        <li><a href="#" class="text-muted text-decoration-none">隐私政策</a></li>
+                    </ul>
+                </div>
+                
+                <div class="col-md-2">
+                    <h6 class="fw-bold mb-3">关注我们</h6>
+                    <div class="d-flex gap-2">
+                        <a href="#" class="text-muted"><i class="fab fa-twitter"></i></a>
+                        <a href="#" class="text-muted"><i class="fab fa-facebook"></i></a>
+                        <a href="#" class="text-muted"><i class="fab fa-linkedin"></i></a>
+                        <a href="#" class="text-muted"><i class="fab fa-github"></i></a>
+                    </div>
+                </div>
+            </div>
+            
+            <hr class="my-4">
+            
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <p class="text-muted mb-0">&copy; 2024 WebflowClone. 保留所有权利。</p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <p class="text-muted mb-0">基于 Python Flask 构建</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- 自定义JS -->
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

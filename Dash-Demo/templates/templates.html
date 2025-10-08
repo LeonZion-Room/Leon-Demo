@@ -1,0 +1,321 @@
+{% extends "base.html" %}
+
+{% block title %}模板库 - WebflowClone{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="bg-light py-5">
+    <div class="container">
+        <div class="text-center">
+            <h1 class="display-4 fw-bold mb-3">精美模板库</h1>
+            <p class="lead text-muted mb-4">选择专业设计的模板，快速启动您的项目</p>
+            
+            <!-- 搜索和筛选 -->
+            <div class="row justify-content-center">
+                <div class="col-md-8">
+                    <div class="input-group mb-4">
+                        <input type="text" class="form-control form-control-lg" placeholder="搜索模板..." id="templateSearch">
+                        <button class="btn btn-primary" type="button">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 分类筛选 -->
+            <div class="d-flex justify-content-center flex-wrap gap-2 mb-4">
+                <button class="btn btn-outline-primary active" data-category="all">全部</button>
+                <button class="btn btn-outline-primary" data-category="business">商业</button>
+                <button class="btn btn-outline-primary" data-category="portfolio">作品集</button>
+                <button class="btn btn-outline-primary" data-category="blog">博客</button>
+                <button class="btn btn-outline-primary" data-category="ecommerce">电商</button>
+                <button class="btn btn-outline-primary" data-category="landing">落地页</button>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- 模板展示 -->
+<section class="py-5">
+    <div class="container">
+        <div class="row g-4" id="templatesGrid">
+            {% for template in templates %}
+            <div class="col-md-6 col-lg-4 template-item" data-category="{{ template.category }}">
+                <div class="card template-card h-100">
+                    <div class="template-preview-container position-relative overflow-hidden">
+                        <div class="template-preview bg-gradient-{{ 'primary' if template.category == 'business' else 'success' if template.category == 'portfolio' else 'warning' if template.category == 'blog' else 'info' }}" style="height: 250px;">
+                            <div class="p-4">
+                                <!-- 模拟网站布局 -->
+                                {% if template.category == 'business' %}
+                                <div class="bg-white rounded mb-3" style="height: 40px;"></div>
+                                <div class="row g-2">
+                                    <div class="col-4">
+                                        <div class="bg-white bg-opacity-75 rounded" style="height: 60px;"></div>
+                                    </div>
+                                    <div class="col-4">
+                                        <div class="bg-white bg-opacity-75 rounded" style="height: 60px;"></div>
+                                    </div>
+                                    <div class="col-4">
+                                        <div class="bg-white bg-opacity-75 rounded" style="height: 60px;"></div>
+                                    </div>
+                                </div>
+                                <div class="bg-white bg-opacity-50 rounded mt-3" style="height: 80px;"></div>
+                                {% elif template.category == 'portfolio' %}
+                                <div class="bg-white rounded mb-3" style="height: 30px;"></div>
+                                <div class="row g-1">
+                                    <div class="col-6">
+                                        <div class="bg-white bg-opacity-75 rounded" style="height: 70px;"></div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="bg-white bg-opacity-75 rounded" style="height: 70px;"></div>
+                                    </div>
+                                </div>
+                                <div class="row g-1 mt-1">
+                                    <div class="col-6">
+                                        <div class="bg-white bg-opacity-75 rounded" style="height: 70px;"></div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="bg-white bg-opacity-75 rounded" style="height: 70px;"></div>
+                                    </div>
+                                </div>
+                                {% elif template.category == 'blog' %}
+                                <div class="bg-white rounded mb-3" style="height: 35px;"></div>
+                                <div class="bg-white bg-opacity-75 rounded mb-2" style="height: 20px;"></div>
+                                <div class="bg-white bg-opacity-75 rounded mb-2" style="height: 20px;"></div>
+                                <div class="bg-white bg-opacity-75 rounded mb-2" style="height: 20px;"></div>
+                                <div class="bg-white bg-opacity-50 rounded" style="height: 60px;"></div>
+                                {% else %}
+                                <div class="bg-white rounded mb-3" style="height: 35px;"></div>
+                                <div class="row g-1">
+                                    <div class="col-4">
+                                        <div class="bg-white bg-opacity-75 rounded" style="height: 50px;"></div>
+                                    </div>
+                                    <div class="col-4">
+                                        <div class="bg-white bg-opacity-75 rounded" style="height: 50px;"></div>
+                                    </div>
+                                    <div class="col-4">
+                                        <div class="bg-white bg-opacity-75 rounded" style="height: 50px;"></div>
+                                    </div>
+                                </div>
+                                <div class="bg-white bg-opacity-50 rounded mt-2" style="height: 80px;"></div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <!-- 悬停覆盖层 -->
+                        <div class="template-overlay position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center">
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-light btn-sm" onclick="previewTemplate('{{ template.id }}')">
+                                    <i class="fas fa-eye me-1"></i>
+                                    预览
+                                </button>
+                                <button class="btn btn-primary btn-sm" onclick="useTemplate('{{ template.id }}')">
+                                    <i class="fas fa-plus me-1"></i>
+                                    使用
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h5 class="card-title fw-bold mb-0">{{ template.name }}</h5>
+                            <span class="badge bg-{{ 'primary' if template.category == 'business' else 'success' if template.category == 'portfolio' else 'warning' if template.category == 'blog' else 'info' }}">
+                                {{ template.category }}
+                            </span>
+                        </div>
+                        <p class="card-text text-muted mb-3">{{ template.description }}</p>
+                        
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-outline-primary btn-sm flex-grow-1" onclick="previewTemplate('{{ template.id }}')">
+                                <i class="fas fa-eye me-1"></i>
+                                预览
+                            </button>
+                            <button class="btn btn-primary btn-sm" onclick="useTemplate('{{ template.id }}')">
+                                <i class="fas fa-plus me-1"></i>
+                                使用
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+            
+            <!-- 空白模板 -->
+            <div class="col-md-6 col-lg-4 template-item" data-category="all">
+                <div class="card template-card h-100">
+                    <div class="template-preview-container position-relative overflow-hidden">
+                        <div class="template-preview bg-light d-flex align-items-center justify-content-center" style="height: 250px;">
+                            <div class="text-center text-muted">
+                                <i class="fas fa-plus fa-3x mb-3"></i>
+                                <h5>空白模板</h5>
+                                <p class="mb-0">从零开始创建</p>
+                            </div>
+                        </div>
+                        
+                        <div class="template-overlay position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center">
+                            <button class="btn btn-primary" onclick="useTemplate('blank')">
+                                <i class="fas fa-plus me-2"></i>
+                                开始创建
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h5 class="card-title fw-bold mb-0">空白模板</h5>
+                            <span class="badge bg-secondary">blank</span>
+                        </div>
+                        <p class="card-text text-muted mb-3">从空白页面开始，完全自定义您的设计</p>
+                        
+                        <button class="btn btn-primary btn-sm w-100" onclick="useTemplate('blank')">
+                            <i class="fas fa-plus me-1"></i>
+                            开始创建
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 没有找到模板 -->
+        <div id="noTemplatesFound" class="text-center py-5" style="display: none;">
+            <div class="mb-4">
+                <i class="fas fa-search fa-4x text-muted"></i>
+            </div>
+            <h3 class="fw-bold mb-3">没有找到匹配的模板</h3>
+            <p class="text-muted mb-4">尝试调整搜索条件或选择其他分类</p>
+            <button class="btn btn-primary" onclick="clearFilters()">
+                <i class="fas fa-refresh me-2"></i>
+                清除筛选
+            </button>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.template-card {
+    transition: all 0.3s ease;
+    border: 1px solid #e9ecef;
+}
+
+.template-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+}
+
+.template-preview-container {
+    position: relative;
+}
+
+.template-overlay {
+    background: rgba(0,0,0,0.7);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.template-card:hover .template-overlay {
+    opacity: 1;
+}
+
+.btn-outline-primary.active {
+    background-color: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+}
+
+.template-item {
+    transition: all 0.3s ease;
+}
+
+.template-item.hidden {
+    display: none;
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// 模板筛选功能
+document.addEventListener('DOMContentLoaded', function() {
+    const categoryButtons = document.querySelectorAll('[data-category]');
+    const templateItems = document.querySelectorAll('.template-item');
+    const searchInput = document.getElementById('templateSearch');
+    const noTemplatesFound = document.getElementById('noTemplatesFound');
+    
+    // 分类筛选
+    categoryButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const category = this.dataset.category;
+            
+            // 更新按钮状态
+            categoryButtons.forEach(btn => btn.classList.remove('active'));
+            this.classList.add('active');
+            
+            // 筛选模板
+            filterTemplates(category, searchInput.value);
+        });
+    });
+    
+    // 搜索功能
+    searchInput.addEventListener('input', function() {
+        const activeCategory = document.querySelector('[data-category].active').dataset.category;
+        filterTemplates(activeCategory, this.value);
+    });
+    
+    function filterTemplates(category, searchTerm) {
+        let visibleCount = 0;
+        
+        templateItems.forEach(item => {
+            const itemCategory = item.dataset.category;
+            const itemTitle = item.querySelector('.card-title').textContent.toLowerCase();
+            const itemDescription = item.querySelector('.card-text').textContent.toLowerCase();
+            
+            const categoryMatch = category === 'all' || itemCategory === category;
+            const searchMatch = searchTerm === '' || 
+                               itemTitle.includes(searchTerm.toLowerCase()) || 
+                               itemDescription.includes(searchTerm.toLowerCase());
+            
+            if (categoryMatch && searchMatch) {
+                item.style.display = 'block';
+                visibleCount++;
+            } else {
+                item.style.display = 'none';
+            }
+        });
+        
+        // 显示/隐藏"没有找到"消息
+        if (visibleCount === 0) {
+            noTemplatesFound.style.display = 'block';
+        } else {
+            noTemplatesFound.style.display = 'none';
+        }
+    }
+});
+
+// 预览模板
+function previewTemplate(templateId) {
+    // 这里可以实现模板预览功能
+    alert('预览功能开发中...');
+}
+
+// 使用模板
+function useTemplate(templateId) {
+    // 创建基于模板的新项目
+    const projectData = {
+        name: '新项目',
+        template: templateId,
+        description: '基于模板创建的项目'
+    };
+    
+    projectManager.createProject(projectData);
+}
+
+// 清除筛选
+function clearFilters() {
+    document.querySelector('[data-category="all"]').click();
+    document.getElementById('templateSearch').value = '';
+}
+</script>
+{% endblock %}

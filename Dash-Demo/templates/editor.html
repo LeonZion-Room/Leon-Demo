@@ -1,0 +1,786 @@
+{% extends "base.html" %}
+
+{% block title %}可视化编辑器 - WebflowClone{% endblock %}
+
+{% block content %}
+<div class="editor-container d-flex">
+    <!-- 左侧组件面板 -->
+    <div class="editor-sidebar">
+        <div class="p-3 border-bottom">
+            <h6 class="fw-bold mb-0">组件库</h6>
+        </div>
+        
+        <!-- 基础组件 -->
+        <div class="p-3">
+            <h6 class="text-muted mb-3">基础组件</h6>
+            
+            <div class="component-item" draggable="true" data-component="text">
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-font text-primary me-2"></i>
+                    <span>文本</span>
+                </div>
+            </div>
+            
+            <div class="component-item" draggable="true" data-component="heading">
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-heading text-success me-2"></i>
+                    <span>标题</span>
+                </div>
+            </div>
+            
+            <div class="component-item" draggable="true" data-component="button">
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-hand-pointer text-warning me-2"></i>
+                    <span>按钮</span>
+                </div>
+            </div>
+            
+            <div class="component-item" draggable="true" data-component="image">
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-image text-info me-2"></i>
+                    <span>图片</span>
+                </div>
+            </div>
+            
+            <div class="component-item" draggable="true" data-component="container">
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-square text-secondary me-2"></i>
+                    <span>容器</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 布局组件 -->
+        <div class="p-3 border-top">
+            <h6 class="text-muted mb-3">布局组件</h6>
+            
+            <div class="component-item" draggable="true" data-component="row">
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-grip-lines text-primary me-2"></i>
+                    <span>行</span>
+                </div>
+            </div>
+            
+            <div class="component-item" draggable="true" data-component="column">
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-columns text-success me-2"></i>
+                    <span>列</span>
+                </div>
+            </div>
+            
+            <div class="component-item" draggable="true" data-component="section">
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-layer-group text-warning me-2"></i>
+                    <span>区域</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 表单组件 -->
+        <div class="p-3 border-top">
+            <h6 class="text-muted mb-3">表单组件</h6>
+            
+            <div class="component-item" draggable="true" data-component="input">
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-edit text-primary me-2"></i>
+                    <span>输入框</span>
+                </div>
+            </div>
+            
+            <div class="component-item" draggable="true" data-component="textarea">
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-align-left text-success me-2"></i>
+                    <span>文本域</span>
+                </div>
+            </div>
+            
+            <div class="component-item" draggable="true" data-component="select">
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-list text-warning me-2"></i>
+                    <span>下拉选择</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 中间画布区域 -->
+    <div class="editor-canvas">
+        <!-- 工具栏 -->
+        <div class="editor-toolbar bg-white border-bottom p-3 d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center gap-3">
+                <div class="d-flex align-items-center gap-2">
+                    <button class="btn btn-sm btn-outline-secondary" onclick="saveProject()" title="保存 (Ctrl+S)">
+                        <i class="fas fa-save"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-secondary" onclick="undoAction()" title="撤销 (Ctrl+Z)">
+                        <i class="fas fa-undo"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-secondary" onclick="redoAction()" title="重做 (Ctrl+Y)">
+                        <i class="fas fa-redo"></i>
+                    </button>
+                </div>
+                
+                <div class="vr"></div>
+                
+                <div class="d-flex align-items-center gap-2">
+                    <button class="btn btn-sm btn-outline-secondary active" onclick="setViewport('desktop')" title="桌面视图">
+                        <i class="fas fa-desktop"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-secondary" onclick="setViewport('tablet')" title="平板视图">
+                        <i class="fas fa-tablet-alt"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-secondary" onclick="setViewport('mobile')" title="手机视图">
+                        <i class="fas fa-mobile-alt"></i>
+                    </button>
+                </div>
+                
+                <div class="vr"></div>
+                
+                <span class="text-muted small">
+                    {% if project %}
+                    {{ project.name }}
+                    {% else %}
+                    新项目
+                    {% endif %}
+                </span>
+            </div>
+            
+            <div class="d-flex align-items-center gap-2">
+                <button class="btn btn-sm btn-outline-primary" onclick="previewProject()">
+                    <i class="fas fa-eye me-1"></i>
+                    预览
+                </button>
+                <button class="btn btn-sm btn-success" onclick="publishProject()">
+                    <i class="fas fa-rocket me-1"></i>
+                    发布
+                </button>
+            </div>
+        </div>
+        
+        <!-- 画布内容 -->
+        <div class="canvas-content p-4" id="canvasContent">
+            <div class="canvas-viewport" id="canvasViewport">
+                {% if project and project.content %}
+                <!-- 加载现有项目内容 -->
+                <div class="project-content">
+                    {{ project.content|safe }}
+                </div>
+                {% else %}
+                <!-- 空白画布 -->
+                <div class="drop-zone text-center py-5">
+                    <i class="fas fa-plus fa-2x mb-3"></i>
+                    <h5>拖拽组件到这里开始设计</h5>
+                    <p class="text-muted">从左侧组件库选择组件，拖拽到此区域</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- 右侧属性面板 -->
+    <div class="editor-properties">
+        <div class="p-3 border-bottom">
+            <h6 class="fw-bold mb-0">属性面板</h6>
+        </div>
+        
+        <div class="properties-content p-3">
+            <div class="text-center text-muted">
+                <i class="fas fa-mouse-pointer fa-2x mb-3"></i>
+                <p>选择一个元素来编辑其属性</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 预览模态框 -->
+<div class="modal fade" id="previewModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">项目预览</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-0">
+                <iframe id="previewFrame" style="width: 100%; height: 600px; border: none;"></iframe>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.editor-container {
+    height: calc(100vh - 76px);
+    overflow: hidden;
+}
+
+.editor-sidebar {
+    width: 300px;
+    background: #f8f9fa;
+    border-right: 1px solid #dee2e6;
+    overflow-y: auto;
+}
+
+.editor-canvas {
+    flex: 1;
+    background: #fff;
+    position: relative;
+    overflow: auto;
+}
+
+.editor-properties {
+    width: 280px;
+    background: #f8f9fa;
+    border-left: 1px solid #dee2e6;
+    overflow-y: auto;
+}
+
+.editor-toolbar {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.canvas-content {
+    min-height: calc(100vh - 140px);
+    background: #f0f0f0;
+}
+
+.canvas-viewport {
+    background: white;
+    min-height: 600px;
+    box-shadow: 0 0 20px rgba(0,0,0,0.1);
+    margin: 0 auto;
+    transition: all 0.3s ease;
+}
+
+.canvas-viewport.desktop {
+    width: 100%;
+    max-width: 1200px;
+}
+
+.canvas-viewport.tablet {
+    width: 768px;
+    max-width: 768px;
+}
+
+.canvas-viewport.mobile {
+    width: 375px;
+    max-width: 375px;
+}
+
+.component-item {
+    padding: 12px;
+    margin: 8px 0;
+    background: white;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    cursor: grab;
+    transition: all 0.3s ease;
+}
+
+.component-item:hover {
+    border-color: var(--primary-color);
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2);
+}
+
+.component-item:active {
+    cursor: grabbing;
+}
+
+.drop-zone {
+    min-height: 200px;
+    border: 2px dashed #dee2e6;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #6c757d;
+    transition: all 0.3s ease;
+    margin: 20px;
+}
+
+.drop-zone.drag-over {
+    border-color: var(--primary-color);
+    background-color: rgba(102, 126, 234, 0.1);
+    color: var(--primary-color);
+}
+
+.selected-element {
+    outline: 2px solid var(--primary-color) !important;
+    outline-offset: 2px;
+    position: relative;
+}
+
+.selected-element::after {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    border: 2px solid var(--primary-color);
+    pointer-events: none;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+    .editor-sidebar,
+    .editor-properties {
+        position: absolute;
+        top: 0;
+        height: 100%;
+        z-index: 1000;
+        transform: translateX(-100%);
+        transition: transform 0.3s ease;
+    }
+    
+    .editor-properties {
+        right: 0;
+        transform: translateX(100%);
+    }
+    
+    .editor-sidebar.show,
+    .editor-properties.show {
+        transform: translateX(0);
+    }
+    
+    .editor-canvas {
+        width: 100%;
+    }
+}
+
+/* 组件样式 */
+.editable-element {
+    position: relative;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.editable-element:hover {
+    box-shadow: 0 0 0 1px rgba(102, 126, 234, 0.5);
+}
+
+.element-controls {
+    position: absolute;
+    top: -30px;
+    right: 0;
+    background: var(--primary-color);
+    border-radius: 4px;
+    padding: 4px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.selected-element .element-controls {
+    opacity: 1;
+}
+
+.element-controls button {
+    background: none;
+    border: none;
+    color: white;
+    padding: 2px 6px;
+    border-radius: 2px;
+    font-size: 12px;
+}
+
+.element-controls button:hover {
+    background: rgba(255,255,255,0.2);
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// 编辑器初始化
+document.addEventListener('DOMContentLoaded', function() {
+    initializeEditor();
+});
+
+function initializeEditor() {
+    setupDragAndDrop();
+    setupCanvasInteraction();
+    setupKeyboardShortcuts();
+    setupViewportSwitching();
+}
+
+// 拖拽功能
+function setupDragAndDrop() {
+    const components = document.querySelectorAll('.component-item');
+    const canvas = document.getElementById('canvasViewport');
+    
+    components.forEach(component => {
+        component.addEventListener('dragstart', function(e) {
+            e.dataTransfer.setData('text/plain', this.dataset.component);
+        });
+    });
+    
+    canvas.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        this.classList.add('drag-over');
+    });
+    
+    canvas.addEventListener('dragleave', function(e) {
+        this.classList.remove('drag-over');
+    });
+    
+    canvas.addEventListener('drop', function(e) {
+        e.preventDefault();
+        this.classList.remove('drag-over');
+        
+        const componentType = e.dataTransfer.getData('text/plain');
+        const element = createComponent(componentType);
+        
+        // 如果有drop-zone，替换它
+        const dropZone = this.querySelector('.drop-zone');
+        if (dropZone) {
+            dropZone.replaceWith(element);
+        } else {
+            this.appendChild(element);
+        }
+        
+        selectElement(element);
+    });
+}
+
+// 创建组件
+function createComponent(type) {
+    const element = document.createElement('div');
+    element.className = 'editable-element mb-3';
+    element.onclick = function(e) {
+        e.stopPropagation();
+        selectElement(this);
+    };
+    
+    switch(type) {
+        case 'text':
+            element.innerHTML = '<p>这是一段文本内容，点击编辑。</p>';
+            break;
+        case 'heading':
+            element.innerHTML = '<h2>这是一个标题</h2>';
+            break;
+        case 'button':
+            element.innerHTML = '<button class="btn btn-primary">按钮</button>';
+            break;
+        case 'image':
+            element.innerHTML = '<img src="https://via.placeholder.com/300x200" class="img-fluid" alt="图片">';
+            break;
+        case 'container':
+            element.innerHTML = '<div class="container p-4 border rounded"><div class="drop-zone">拖拽组件到这里</div></div>';
+            break;
+        case 'row':
+            element.innerHTML = '<div class="row"><div class="col-md-6"><div class="drop-zone">列 1</div></div><div class="col-md-6"><div class="drop-zone">列 2</div></div></div>';
+            break;
+        case 'column':
+            element.innerHTML = '<div class="col-md-6"><div class="drop-zone">拖拽组件到这里</div></div>';
+            break;
+        case 'section':
+            element.innerHTML = '<section class="py-5"><div class="container"><div class="drop-zone">拖拽组件到这里</div></div></section>';
+            break;
+        case 'input':
+            element.innerHTML = '<div class="mb-3"><label class="form-label">标签</label><input type="text" class="form-control" placeholder="请输入..."></div>';
+            break;
+        case 'textarea':
+            element.innerHTML = '<div class="mb-3"><label class="form-label">标签</label><textarea class="form-control" rows="3" placeholder="请输入..."></textarea></div>';
+            break;
+        case 'select':
+            element.innerHTML = '<div class="mb-3"><label class="form-label">标签</label><select class="form-select"><option>选项 1</option><option>选项 2</option></select></div>';
+            break;
+        default:
+            element.innerHTML = '<div class="p-3 border rounded">未知组件</div>';
+    }
+    
+    // 添加控制按钮
+    const controls = document.createElement('div');
+    controls.className = 'element-controls';
+    controls.innerHTML = `
+        <button onclick="editElement(this.parentElement.parentElement)" title="编辑">
+            <i class="fas fa-edit"></i>
+        </button>
+        <button onclick="deleteElement(this.parentElement.parentElement)" title="删除">
+            <i class="fas fa-trash"></i>
+        </button>
+    `;
+    element.appendChild(controls);
+    
+    return element;
+}
+
+// 选择元素
+function selectElement(element) {
+    // 移除之前的选择
+    document.querySelectorAll('.selected-element').forEach(el => {
+        el.classList.remove('selected-element');
+    });
+    
+    // 选择新元素
+    element.classList.add('selected-element');
+    
+    // 更新属性面板
+    updatePropertiesPanel(element);
+}
+
+// 更新属性面板
+function updatePropertiesPanel(element) {
+    const propertiesContent = document.querySelector('.properties-content');
+    const styles = window.getComputedStyle(element);
+    
+    propertiesContent.innerHTML = `
+        <div class="mb-3">
+            <label class="form-label">元素类型</label>
+            <input type="text" class="form-control" value="${element.tagName.toLowerCase()}" readonly>
+        </div>
+        
+        <div class="mb-3">
+            <label class="form-label">CSS类</label>
+            <input type="text" class="form-control" value="${element.className.replace('editable-element', '').replace('selected-element', '').trim()}" 
+                   onchange="updateElementClass(this.value)">
+        </div>
+        
+        <h6 class="fw-bold mb-3 mt-4">样式设置</h6>
+        
+        <div class="mb-3">
+            <label class="form-label">背景颜色</label>
+            <input type="color" class="form-control form-control-color" 
+                   value="${rgbToHex(styles.backgroundColor)}" 
+                   onchange="updateElementStyle('backgroundColor', this.value)">
+        </div>
+        
+        <div class="mb-3">
+            <label class="form-label">文字颜色</label>
+            <input type="color" class="form-control form-control-color" 
+                   value="${rgbToHex(styles.color)}" 
+                   onchange="updateElementStyle('color', this.value)">
+        </div>
+        
+        <div class="mb-3">
+            <label class="form-label">字体大小</label>
+            <input type="range" class="form-range" min="10" max="72" 
+                   value="${parseInt(styles.fontSize)}" 
+                   onchange="updateElementStyle('fontSize', this.value + 'px')">
+            <small class="text-muted">${styles.fontSize}</small>
+        </div>
+        
+        <div class="mb-3">
+            <label class="form-label">内边距</label>
+            <input type="range" class="form-range" min="0" max="50" 
+                   value="${parseInt(styles.padding) || 0}" 
+                   onchange="updateElementStyle('padding', this.value + 'px')">
+            <small class="text-muted">${styles.padding}</small>
+        </div>
+        
+        <div class="mb-3">
+            <label class="form-label">外边距</label>
+            <input type="range" class="form-range" min="0" max="50" 
+                   value="${parseInt(styles.margin) || 0}" 
+                   onchange="updateElementStyle('margin', this.value + 'px')">
+            <small class="text-muted">${styles.margin}</small>
+        </div>
+        
+        <button class="btn btn-danger btn-sm w-100" onclick="deleteSelectedElement()">
+            <i class="fas fa-trash me-1"></i>
+            删除元素
+        </button>
+    `;
+}
+
+// 画布交互
+function setupCanvasInteraction() {
+    const canvas = document.getElementById('canvasViewport');
+    
+    canvas.addEventListener('click', function(e) {
+        if (e.target === this) {
+            // 点击空白区域，取消选择
+            document.querySelectorAll('.selected-element').forEach(el => {
+                el.classList.remove('selected-element');
+            });
+            
+            // 清空属性面板
+            document.querySelector('.properties-content').innerHTML = `
+                <div class="text-center text-muted">
+                    <i class="fas fa-mouse-pointer fa-2x mb-3"></i>
+                    <p>选择一个元素来编辑其属性</p>
+                </div>
+            `;
+        }
+    });
+}
+
+// 键盘快捷键
+function setupKeyboardShortcuts() {
+    document.addEventListener('keydown', function(e) {
+        if (e.ctrlKey || e.metaKey) {
+            switch(e.key) {
+                case 's':
+                    e.preventDefault();
+                    saveProject();
+                    break;
+                case 'z':
+                    e.preventDefault();
+                    undoAction();
+                    break;
+                case 'y':
+                    e.preventDefault();
+                    redoAction();
+                    break;
+            }
+        }
+        
+        if (e.key === 'Delete') {
+            deleteSelectedElement();
+        }
+    });
+}
+
+// 视口切换
+function setupViewportSwitching() {
+    const buttons = document.querySelectorAll('[onclick^="setViewport"]');
+    buttons.forEach(button => {
+        button.addEventListener('click', function() {
+            buttons.forEach(btn => btn.classList.remove('active'));
+            this.classList.add('active');
+        });
+    });
+}
+
+// 设置视口
+function setViewport(type) {
+    const viewport = document.getElementById('canvasViewport');
+    viewport.className = `canvas-viewport ${type}`;
+}
+
+// 工具栏功能
+function saveProject() {
+    const content = document.getElementById('canvasViewport').innerHTML;
+    const projectId = {{ project.id if project else 'null' }};
+    
+    if (projectId) {
+        projectManager.saveProject(projectId, content);
+    } else {
+        // 新项目，需要先创建
+        const projectData = {
+            name: '新项目',
+            content: content
+        };
+        projectManager.createProject(projectData);
+    }
+}
+
+function undoAction() {
+    // 撤销功能
+    console.log('撤销操作');
+}
+
+function redoAction() {
+    // 重做功能
+    console.log('重做操作');
+}
+
+function previewProject() {
+    const content = document.getElementById('canvasViewport').innerHTML;
+    const previewFrame = document.getElementById('previewFrame');
+    
+    const previewContent = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>预览</title>
+            <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+        </head>
+        <body>
+            ${content}
+        </body>
+        </html>
+    `;
+    
+    previewFrame.srcdoc = previewContent;
+    new bootstrap.Modal(document.getElementById('previewModal')).show();
+}
+
+function publishProject() {
+    const projectId = {{ project.id if project else 'null' }};
+    
+    if (projectId) {
+        projectManager.publishProject(projectId);
+    } else {
+        alert('请先保存项目');
+    }
+}
+
+// 元素操作
+function editElement(element) {
+    // 编辑元素内容
+    const content = element.innerHTML.replace(/<div class="element-controls">.*?<\/div>/, '');
+    const newContent = prompt('编辑内容:', content);
+    
+    if (newContent !== null) {
+        element.innerHTML = newContent;
+        // 重新添加控制按钮
+        const controls = document.createElement('div');
+        controls.className = 'element-controls';
+        controls.innerHTML = `
+            <button onclick="editElement(this.parentElement.parentElement)" title="编辑">
+                <i class="fas fa-edit"></i>
+            </button>
+            <button onclick="deleteElement(this.parentElement.parentElement)" title="删除">
+                <i class="fas fa-trash"></i>
+            </button>
+        `;
+        element.appendChild(controls);
+    }
+}
+
+function deleteElement(element) {
+    if (confirm('确定要删除这个元素吗？')) {
+        element.remove();
+        
+        // 清空属性面板
+        document.querySelector('.properties-content').innerHTML = `
+            <div class="text-center text-muted">
+                <i class="fas fa-mouse-pointer fa-2x mb-3"></i>
+                <p>选择一个元素来编辑其属性</p>
+            </div>
+        `;
+    }
+}
+
+function deleteSelectedElement() {
+    const selected = document.querySelector('.selected-element');
+    if (selected) {
+        deleteElement(selected);
+    }
+}
+
+// 工具函数
+function rgbToHex(rgb) {
+    if (rgb.startsWith('#')) return rgb;
+    
+    const result = rgb.match(/\d+/g);
+    if (!result || result.length < 3) return '#000000';
+    
+    return '#' + result.slice(0, 3).map(x => {
+        const hex = parseInt(x).toString(16);
+        return hex.length === 1 ? '0' + hex : hex;
+    }).join('');
+}
+
+function updateElementClass(className) {
+    const selected = document.querySelector('.selected-element');
+    if (selected) {
+        selected.className = `editable-element selected-element ${className}`;
+    }
+}
+
+function updateElementStyle(property, value) {
+    const selected = document.querySelector('.selected-element');
+    if (selected) {
+        selected.style[property] = value;
+    }
+}
+</script>
+{% endblock %}

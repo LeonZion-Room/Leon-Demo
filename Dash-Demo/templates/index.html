@@ -1,0 +1,325 @@
+{% extends "base.html" %}
+
+{% block title %}WebflowClone - 可视化网站构建器{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-section bg-gradient-primary text-white py-5">
+    <div class="container">
+        <div class="row align-items-center min-vh-75">
+            <div class="col-lg-6">
+                <h1 class="display-4 fw-bold mb-4">
+                    用可视化方式<br>
+                    <span class="text-warning">构建专业网站</span>
+                </h1>
+                <p class="lead mb-4">
+                    无需编程知识，通过拖拽即可创建响应式、高性能的网站。
+                    从设计到发布，一站式解决方案。
+                </p>
+                <div class="d-flex gap-3 flex-wrap">
+                    <a href="{{ url_for('create_project') }}" class="btn btn-warning btn-lg px-4">
+                        <i class="fas fa-rocket me-2"></i>
+                        免费开始
+                    </a>
+                    <a href="{{ url_for('templates') }}" class="btn btn-outline-light btn-lg px-4">
+                        <i class="fas fa-eye me-2"></i>
+                        查看模板
+                    </a>
+                </div>
+                
+                <div class="mt-4">
+                    <small class="text-light opacity-75">
+                        <i class="fas fa-check me-1"></i> 无需信用卡
+                        <i class="fas fa-check me-1 ms-3"></i> 免费模板
+                        <i class="fas fa-check me-1 ms-3"></i> 即时发布
+                    </small>
+                </div>
+            </div>
+            
+            <div class="col-lg-6">
+                <div class="position-relative">
+                    <div class="browser-mockup bg-white rounded shadow-lg p-3">
+                        <div class="browser-header d-flex align-items-center mb-3">
+                            <div class="browser-dots d-flex gap-1">
+                                <div class="dot bg-danger rounded-circle" style="width: 12px; height: 12px;"></div>
+                                <div class="dot bg-warning rounded-circle" style="width: 12px; height: 12px;"></div>
+                                <div class="dot bg-success rounded-circle" style="width: 12px; height: 12px;"></div>
+                            </div>
+                            <div class="browser-url bg-light rounded px-3 py-1 ms-3 flex-grow-1">
+                                <small class="text-muted">yourwebsite.com</small>
+                            </div>
+                        </div>
+                        <div class="browser-content bg-light rounded" style="height: 300px;">
+                            <div class="p-4">
+                                <div class="bg-primary rounded mb-3" style="height: 60px;"></div>
+                                <div class="row g-2">
+                                    <div class="col-4">
+                                        <div class="bg-secondary rounded" style="height: 80px;"></div>
+                                    </div>
+                                    <div class="col-4">
+                                        <div class="bg-secondary rounded" style="height: 80px;"></div>
+                                    </div>
+                                    <div class="col-4">
+                                        <div class="bg-secondary rounded" style="height: 80px;"></div>
+                                    </div>
+                                </div>
+                                <div class="bg-info rounded mt-3" style="height: 100px;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Features Section -->
+<section class="py-5">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="display-5 fw-bold mb-3">为什么选择我们？</h2>
+            <p class="lead text-muted">强大的功能，简单的操作</p>
+        </div>
+        
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="feature-card text-center p-4 h-100">
+                    <div class="feature-icon bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
+                        <i class="fas fa-mouse-pointer fa-2x"></i>
+                    </div>
+                    <h4 class="fw-bold mb-3">可视化编辑</h4>
+                    <p class="text-muted">
+                        直观的拖拽界面，实时预览效果。
+                        无需编程，所见即所得。
+                    </p>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="feature-card text-center p-4 h-100">
+                    <div class="feature-icon bg-success text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
+                        <i class="fas fa-mobile-alt fa-2x"></i>
+                    </div>
+                    <h4 class="fw-bold mb-3">响应式设计</h4>
+                    <p class="text-muted">
+                        自动适配各种设备，
+                        确保在手机、平板、电脑上完美显示。
+                    </p>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="feature-card text-center p-4 h-100">
+                    <div class="feature-icon bg-warning text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
+                        <i class="fas fa-rocket fa-2x"></i>
+                    </div>
+                    <h4 class="fw-bold mb-3">快速发布</h4>
+                    <p class="text-muted">
+                        一键发布到全球CDN，
+                        确保网站快速加载。
+                    </p>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="feature-card text-center p-4 h-100">
+                    <div class="feature-icon bg-info text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
+                        <i class="fas fa-palette fa-2x"></i>
+                    </div>
+                    <h4 class="fw-bold mb-3">丰富模板</h4>
+                    <p class="text-muted">
+                        精心设计的专业模板，
+                        涵盖各行各业。
+                    </p>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="feature-card text-center p-4 h-100">
+                    <div class="feature-icon bg-danger text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
+                        <i class="fas fa-cogs fa-2x"></i>
+                    </div>
+                    <h4 class="fw-bold mb-3">高级功能</h4>
+                    <p class="text-muted">
+                        表单处理、动画效果、
+                        SEO优化等高级功能。
+                    </p>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="feature-card text-center p-4 h-100">
+                    <div class="feature-icon bg-secondary text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
+                        <i class="fas fa-users fa-2x"></i>
+                    </div>
+                    <h4 class="fw-bold mb-3">团队协作</h4>
+                    <p class="text-muted">
+                        多人协作编辑，
+                        实时同步更新。
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Templates Preview Section -->
+<section class="py-5 bg-light">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="display-5 fw-bold mb-3">精美模板</h2>
+            <p class="lead text-muted">从这些专业设计的模板开始</p>
+        </div>
+        
+        <div class="row g-4">
+            <div class="col-md-6 col-lg-3">
+                <div class="template-card bg-white rounded shadow-sm overflow-hidden h-100">
+                    <div class="template-preview bg-gradient-primary" style="height: 200px;">
+                        <div class="p-3">
+                            <div class="bg-white rounded mb-2" style="height: 30px;"></div>
+                            <div class="bg-white bg-opacity-75 rounded mb-2" style="height: 20px; width: 70%;"></div>
+                            <div class="bg-white bg-opacity-50 rounded" style="height: 20px; width: 50%;"></div>
+                        </div>
+                    </div>
+                    <div class="p-3">
+                        <h5 class="fw-bold mb-2">商业网站</h5>
+                        <p class="text-muted small mb-3">专业的企业展示网站</p>
+                        <a href="{{ url_for('templates') }}" class="btn btn-outline-primary btn-sm">查看详情</a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6 col-lg-3">
+                <div class="template-card bg-white rounded shadow-sm overflow-hidden h-100">
+                    <div class="template-preview bg-gradient-success" style="height: 200px;">
+                        <div class="p-3">
+                            <div class="bg-white rounded mb-2" style="height: 30px;"></div>
+                            <div class="row g-1">
+                                <div class="col-6">
+                                    <div class="bg-white bg-opacity-75 rounded" style="height: 60px;"></div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="bg-white bg-opacity-75 rounded" style="height: 60px;"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="p-3">
+                        <h5 class="fw-bold mb-2">作品集</h5>
+                        <p class="text-muted small mb-3">展示个人作品的精美模板</p>
+                        <a href="{{ url_for('templates') }}" class="btn btn-outline-success btn-sm">查看详情</a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6 col-lg-3">
+                <div class="template-card bg-white rounded shadow-sm overflow-hidden h-100">
+                    <div class="template-preview bg-gradient-warning" style="height: 200px;">
+                        <div class="p-3">
+                            <div class="bg-white rounded mb-2" style="height: 30px;"></div>
+                            <div class="bg-white bg-opacity-75 rounded mb-1" style="height: 15px;"></div>
+                            <div class="bg-white bg-opacity-75 rounded mb-1" style="height: 15px;"></div>
+                            <div class="bg-white bg-opacity-75 rounded mb-1" style="height: 15px;"></div>
+                        </div>
+                    </div>
+                    <div class="p-3">
+                        <h5 class="fw-bold mb-2">博客</h5>
+                        <p class="text-muted small mb-3">现代化的博客模板</p>
+                        <a href="{{ url_for('templates') }}" class="btn btn-outline-warning btn-sm">查看详情</a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6 col-lg-3">
+                <div class="template-card bg-white rounded shadow-sm overflow-hidden h-100">
+                    <div class="template-preview bg-gradient-info" style="height: 200px;">
+                        <div class="p-3">
+                            <div class="bg-white rounded mb-2" style="height: 30px;"></div>
+                            <div class="row g-1">
+                                <div class="col-4">
+                                    <div class="bg-white bg-opacity-75 rounded" style="height: 50px;"></div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="bg-white bg-opacity-75 rounded" style="height: 50px;"></div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="bg-white bg-opacity-75 rounded" style="height: 50px;"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="p-3">
+                        <h5 class="fw-bold mb-2">电商网站</h5>
+                        <p class="text-muted small mb-3">功能完整的在线商店</p>
+                        <a href="{{ url_for('templates') }}" class="btn btn-outline-info btn-sm">查看详情</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="text-center mt-5">
+            <a href="{{ url_for('templates') }}" class="btn btn-primary btn-lg">
+                查看所有模板
+                <i class="fas fa-arrow-right ms-2"></i>
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- CTA Section -->
+<section class="py-5 bg-primary text-white">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <h2 class="display-6 fw-bold mb-3">准备开始创建您的网站了吗？</h2>
+                <p class="lead mb-0">
+                    加入数千名用户，使用我们的平台创建专业网站。
+                </p>
+            </div>
+            <div class="col-lg-4 text-lg-end">
+                <a href="{{ url_for('create_project') }}" class="btn btn-warning btn-lg px-4">
+                    <i class="fas fa-plus me-2"></i>
+                    立即开始
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.bg-gradient-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.min-vh-75 {
+    min-height: 75vh;
+}
+
+.feature-card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border: 1px solid #e9ecef;
+    border-radius: 10px;
+}
+
+.feature-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+}
+
+.template-card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.template-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+}
+
+.browser-mockup {
+    max-width: 500px;
+    margin: 0 auto;
+}
+</style>
+{% endblock %}
