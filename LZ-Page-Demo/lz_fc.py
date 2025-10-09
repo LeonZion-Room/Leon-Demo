@@ -35,7 +35,7 @@ def show_lz_window():
     def open_image_link():
         """打开指定的图片链接"""
         # 这里可以设置您想要的具体链接
-        image_link_url = "https://www.example.com"  # 请替换为您想要的链接
+        image_link_url = "https://www.runoob.com/dash/dash-tutorial.html"  # 请替换为您想要的链接
         webbrowser.open(image_link_url)
     
     # 在深色区域中添加内容
@@ -68,9 +68,11 @@ def show_lz_window():
     subtitle_label.pack(pady=(0, 15))
     subtitle_label.bind("<Button-1>", lambda e: open_image_link())
     
-    # 创建圆角按钮容器
+    # 创建圆角按钮容器-圆角半径
     button_frame = tk.Frame(content_frame, bg='#000000')
     button_frame.pack(pady=(10, 5))
+
+    
     
     # 使用Canvas创建真正的圆角按钮
     button_canvas = tk.Canvas(
@@ -80,6 +82,8 @@ def show_lz_window():
         bg='#000000', 
         highlightthickness=2,
         cursor='hand2'
+        
+
     )
     button_canvas.pack()
     
