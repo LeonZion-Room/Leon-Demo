@@ -341,7 +341,7 @@ def pdf_to_img(input_pdf_path, image_format='PNG', zoom_factor=2.0):
         return None
 
 
-def pdf2docx(pdf_path, docx_path=None):
+def pdf2docx(pdf_path, docx_path=None, progress_cb=None):
     """
     将PDF文件转换为DOCX文件
     
@@ -398,34 +398,47 @@ def pdf2docx(pdf_path, docx_path=None):
         except ImportError:
             raise ImportError("需要安装comtypes库: pip install comtypes")
         
-        print(f"开始转换PDF到DOCX: {pdf_path}")
+        def report(pct, msg):
+            try:
+                if progress_cb:
+                    progress_cb(int(pct), str(msg))
+                else:
+                    print(f"[{int(pct):3d}%] {msg}")
+            except Exception:
+                # 回调异常不影响主流程
+                print(f"[{int(pct):3d}%] {msg}")
+
+        report(0, f"开始转换PDF到DOCX: {pdf_path}")
         print(f"输出文件: {docx_path}")
         
         # 创建Word应用程序对象
         word = comtypes.client.CreateObject('Word.Application')
         word.Visible = False  # 后台运行，不显示窗口
+        report(10, "已启动Word应用")
         
         try:
             # 将路径转换为绝对路径
             pdf_path_abs = os.path.abspath(pdf_path)
             docx_path_abs = os.path.abspath(docx_path)
             
-            print(f"正在打开PDF文件...")
+            report(20, "正在打开PDF文件...")
             # 打开PDF文件
             doc = word.Documents.Open(pdf_path_abs)
+            report(40, "已打开PDF文件")
             
-            print(f"正在转换为DOCX格式...")
+            report(50, "正在转换为DOCX格式...")
             # 保存为DOCX格式 (FileFormat=16 对应 docx 格式)
             doc.SaveAs2(docx_path_abs, FileFormat=16)
+            report(95, "已保存DOCX文件")
             
             # 关闭文档
             doc.Close()
             
-            print(f"✅ PDF转DOCX完成: {docx_path}")
+            report(100, f"✅ PDF转DOCX完成: {docx_path}")
             return docx_path
             
         except Exception as e:
-            print(f"❌ 转换过程中出现错误: {str(e)}")
+            report(100, f"❌ 转换过程中出现错误: {str(e)}")
             # 尝试关闭可能打开的文档
             try:
                 if 'doc' in locals():
@@ -446,7 +459,7 @@ def pdf2docx(pdf_path, docx_path=None):
         return None
 
 
-def pdf2docx_batch(pdf_folder, output_folder=None):
+def pdf2docx_batch(pdf_folder, output_folder=None, progress_cb=None):
     """
     批量将文件夹中的PDF文件转换为DOCX文件
     
@@ -483,20 +496,31 @@ def pdf2docx_batch(pdf_folder, output_folder=None):
         print("❌ 文件夹中没有找到PDF文件")
         return []
     
-    print(f"找到 {len(pdf_files)} 个PDF文件，开始批量转换...")
+    total = len(pdf_files)
+    print(f"找到 {total} 个PDF文件，开始批量转换...")
     
     successful_conversions = []
     failed_conversions = []
     
+    def report(pct, msg):
+        try:
+            if progress_cb:
+                progress_cb(int(pct), str(msg))
+            else:
+                print(f"[{int(pct):3d}%] {msg}")
+        except Exception:
+            print(f"[{int(pct):3d}%] {msg}")
+
     for i, pdf_file in enumerate(pdf_files, 1):
         pdf_path = os.path.join(pdf_folder, pdf_file)
         name_without_ext = os.path.splitext(pdf_file)[0]
         docx_path = os.path.join(output_folder, f"{name_without_ext}.docx")
         
         print(f"\n[{i}/{len(pdf_files)}] 转换: {pdf_file}")
+        report(((i-1) * 100) / total, f"开始转换 {pdf_file}")
         
         try:
-            result = pdf2docx(pdf_path, docx_path)
+            result = pdf2docx(pdf_path, docx_path, progress_cb=progress_cb)
             if result:
                 successful_conversions.append(result)
                 print(f"  ✅ 成功")
@@ -506,10 +530,13 @@ def pdf2docx_batch(pdf_folder, output_folder=None):
         except Exception as e:
             failed_conversions.append(pdf_file)
             print(f"  ❌ 失败: {str(e)}")
+        finally:
+            report((i * 100) / total, f"完成转换 {pdf_file}")
     
     print(f"\n🎉 批量转换完成!")
     print(f"✅ 成功: {len(successful_conversions)} 个文件")
     print(f"❌ 失败: {len(failed_conversions)} 个文件")
+    report(100, "批量转换完成")
     
     if failed_conversions:
         print("失败的文件:")

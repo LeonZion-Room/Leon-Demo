@@ -8,6 +8,14 @@ from pdf_fc import pdf2docx, pdf2docx_batch
 from file_path_fc import fc_path_get
 import os
 
+def console_progress(pct, msg):
+    """简单的控制台进度输出"""
+    try:
+        print(f"{pct:3d}% - {msg}")
+    except Exception:
+        # 确保任何异常不影响主流程
+        print(f"{pct}% - {msg}")
+
 def example_single_conversion():
     """示例：单个文件转换"""
     print("=" * 50)
@@ -29,8 +37,8 @@ def example_single_conversion():
     print(f"选择的文件: {pdf_file}")
     
     try:
-        # 转换PDF到DOCX
-        result = pdf2docx(pdf_file)
+        # 转换PDF到DOCX（带进度回调）
+        result = pdf2docx(pdf_file, progress_cb=console_progress)
         
         if result:
             print(f"✅ 转换成功！")
@@ -58,8 +66,8 @@ def example_batch_conversion():
     print(f"批量转换文件夹: {folder_path}")
     
     try:
-        # 批量转换
-        results = pdf2docx_batch(folder_path)
+        # 批量转换（带进度回调）
+        results = pdf2docx_batch(folder_path, progress_cb=console_progress)
         
         if results:
             print(f"✅ 批量转换完成！")
@@ -90,8 +98,8 @@ def example_custom_output():
     print(f"自定义输出: {custom_output}")
     
     try:
-        # 转换并指定输出路径
-        result = pdf2docx(pdf_file, custom_output)
+        # 转换并指定输出路径（带进度回调）
+        result = pdf2docx(pdf_file, custom_output, progress_cb=console_progress)
         
         if result:
             print(f"✅ 转换成功！")
@@ -119,13 +127,6 @@ def main():
     try:
         # 示例1：单个文件转换
         example_single_conversion()
-        
-        # 示例2：批量转换
-        example_batch_conversion()
-        
-        # 示例3：自定义输出路径
-        example_custom_output()
-        
     except KeyboardInterrupt:
         print("\n用户取消操作")
     except Exception as e:
