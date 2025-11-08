@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>主题预览 · 北欧蓝色</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="titlebar">
+      <div class="title">PDF 工具 · 北欧蓝风格</div>
+      <div class="actions">
+        <button class="tb-btn">最小化</button>
+        <button class="tb-btn">关闭</button>
+      </div>
+    </div>
+
+    <div class="container">
+      <section class="card">
+        <h2 class="card-title">上传与输出</h2>
+        <div class="row">
+          <input class="input" placeholder="请选择要转换的 PDF 文件…" />
+          <button class="btn">选择 PDF</button>
+        </div>
+        <div class="row">
+          <input class="input" placeholder="输出目录（可选）" />
+          <button class="btn">选择输出目录</button>
+        </div>
+        <div class="row">
+          <select class="input">
+            <option>PNG</option>
+            <option>JPEG</option>
+          </select>
+          <select class="input">
+            <option>缩放 1.00x</option>
+            <option selected>缩放 2.00x</option>
+            <option>缩放 3.00x</option>
+          </select>
+          <select class="input">
+            <option>JPEG质量 95</option>
+            <option>JPEG质量 85</option>
+          </select>
+        </div>
+        <div class="row">
+          <input class="input" placeholder="文件前缀（例如：page_）" />
+        </div>
+        <div class="row">
+          <button class="btn large">开始转换</button>
+          <button class="btn large hollow">打开输出文件夹</button>
+        </div>
+        <div class="row">
+          <div class="progress">
+            <div class="chunk" style="width: 38%"></div>
+          </div>
+        </div>
+        <p class="hint">风格预览：按钮、输入框、进度条与卡片均为北欧蓝配色。</p>
+      </section>
+    </div>
+  </body>
+  </html>

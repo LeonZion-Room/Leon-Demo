@@ -1,0 +1,219 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+from PySide6.QtWidgets import QApplication
+from PySide6.QtGui import QFont
+import os
+import json
+from typing import Optional, Dict
+
+
+def dp(scale: float, value: float) -> int:
+    return int(round(value * scale))
+
+
+def compute_scale(app: QApplication, base_width: int = 1280, base_height: int = 720) -> float:
+    screen = app.primaryScreen()
+    if not screen:
+        return 1.0
+    g = screen.availableGeometry()
+    sw = g.width() / float(base_width)
+    sh = g.height() / float(base_height)
+    dpi_scale = screen.logicalDotsPerInch() / 96.0
+    scale = (sw + sh) / 2.0
+    scale = scale * max(1.0, dpi_scale * 0.9)
+    return max(0.85, min(1.8, scale))
+
+
+def apply_base_font(app: QApplication, scale: float) -> None:
+    font = QFont('Microsoft YaHei UI', dp(scale, 12))
+    app.setFont(font)
+
+
+def build_style(scale: float, palette: Optional[Dict[str, str]] = None) -> str:
+    # Sizes
+    b = dp(scale, 1)
+    r_card = dp(scale, 10)
+    r_btn = dp(scale, 8)
+    pad = dp(scale, 6)
+    # 紧凑按钮内边距（更贴近文本与边缘）
+    btn_pad_v = dp(scale, 4)
+    btn_pad_h = dp(scale, 10)
+
+    # 默认 Nordic Blue 配色（无金色）
+    default_palette = {
+        "bg": "#0b1624",
+        "panel": "#0e1c2e",
+        "text": "#e6edf5",
+        "muted": "#b9c7d9",
+        "border": "#000000",
+        "primary": "#3a5f78",
+        "primary_hover": "#34576f",
+        "primary_disabled": "#2a465a",
+        "input_bg": "#132235",
+    }
+
+    # 允许通过外部 JSON（ui_palette.json）或传入参数覆盖配色
+    file_palette = None
+    try:
+        p = os.path.join(os.path.dirname(__file__), "ui_palette.json")
+        if os.path.exists(p):
+            with open(p, "r", encoding="utf-8") as f:
+                file_palette = json.load(f)
+    except Exception:
+        file_palette = None
+
+    final_palette = {**default_palette, **(file_palette or {}), **(palette or {})}
+
+    bg = final_palette["bg"]
+    panel = final_palette["panel"]
+    text = final_palette["text"]
+    muted = final_palette["muted"]
+    border = final_palette["border"]
+    primary = final_palette["primary"]
+    primary_hover = final_palette["primary_hover"]
+    primary_disabled = final_palette["primary_disabled"]
+    input_bg = final_palette["input_bg"]
+
+    return f"""
+* {{ font-family: 'Microsoft YaHei UI', 'Segoe UI', sans-serif; }}
+QWidget {{ background-color: {bg}; color: {text}; }}
+
+QFrame#Card, QFrame#PreviewCard, QFrame#PanelCard, QFrame#LogCard {{
+    background-color: {panel};
+    border: {b}px solid {border};
+    border-radius: {r_card}px;
+}}
+
+QLabel#Title {{ font-size: {dp(scale, 18)}px; font-weight: 700; }}
+QLabel {{ font-size: {dp(scale, 13)}px; }}
+
+QPushButton {{
+    background-color: {primary};
+    color: #f0f6fb;
+    border: {b}px solid {border};
+    padding: {btn_pad_v}px {btn_pad_h}px;
+    border-radius: {r_btn}px;
+    font-size: {dp(scale, 14)}px;
+    min-height: {dp(scale, 32)}px;
+}}
+QPushButton:hover {{ background-color: {primary_hover}; }}
+QPushButton:disabled {{ background-color: {primary_disabled}; color: {muted}; border-color: {border}; }}
+
+    QLineEdit, QComboBox, QDoubleSpinBox, QSpinBox {{
+        background-color: {input_bg};
+        border: {b}px solid {border};
+        border-radius: {r_btn}px;
+        padding: {pad}px;
+        color: {text};
+        font-size: {dp(scale, 14)}px;
+        min-height: {dp(scale, 32)}px;
+    }}
+
+    /* 占位符文字更柔和，避免视觉拥挤 */
+    QLineEdit::placeholder {{
+        color: {muted};
+    }}
+
+/* 统一列表与滚动区域样式 */
+QScrollArea {{
+    background-color: {panel};
+    border: {b}px solid {border};
+    border-radius: {r_card}px;
+}}
+QListWidget {{
+    background-color: {panel};
+    border: {b}px solid {border};
+    border-radius: {r_card}px;
+    padding: {pad}px;
+    color: {text};
+    font-size: {dp(scale, 14)}px;
+}}
+QListWidget::item:selected {{
+    background-color: {primary};
+    color: #f0f6fb;
+}}
+
+/* 按钮选中态（用于切换型按钮） */
+QPushButton:checked {{
+    background-color: {primary_hover};
+}}
+
+QComboBox QAbstractItemView {{
+    background-color: {panel};
+    color: {text};
+    border: {b}px solid {border};
+    selection-background-color: {primary};
+    font-size: {dp(scale, 14)}px;
+}}
+
+QProgressBar {{
+    border: {b}px solid {border};
+    border-radius: {r_btn}px;
+    text-align: center;
+    min-height: {dp(scale, 20)}px;
+    font-size: {dp(scale, 12)}px;
+}}
+QProgressBar::chunk {{ background-color: {primary}; border-radius: {dp(scale, 10)}px; }}
+
+QToolTip {{
+    background-color: {input_bg};
+    color: {text};
+    border: {b}px solid {border};
+    padding: {dp(scale, 6)}px {dp(scale, 10)}px;
+    font-size: {dp(scale, 13)}px;
+}}
+
+/* 滚动条更易操作的尺寸与视觉 */
+QScrollBar:vertical {{
+    background: {panel};
+    width: {dp(scale, 14)}px;
+    /* 上 右 下 左 */
+    margin: {dp(scale, 2)}px {dp(scale, 2)}px {dp(scale, 2)}px {dp(scale, 6)}px;
+    border: {b}px solid {border};
+    border-radius: {dp(scale, 8)}px;
+}}
+QScrollBar::handle:vertical {{
+    background: {primary};
+    min-height: {dp(scale, 24)}px;
+    border-radius: {dp(scale, 6)}px;
+}}
+QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {{
+    height: 0px;
+}}
+QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {{
+    background: none;
+}}
+
+QScrollBar:horizontal {{
+    background: {panel};
+    height: {dp(scale, 14)}px;
+    margin: {dp(scale, 2)}px;
+    border: {b}px solid {border};
+    border-radius: {dp(scale, 8)}px;
+}}
+QScrollBar::handle:horizontal {{
+    background: {primary};
+    min-width: {dp(scale, 24)}px;
+    border-radius: {dp(scale, 6)}px;
+}}
+QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal {{
+    width: 0px;
+}}
+QScrollBar::add-page:horizontal, QScrollBar::sub-page:horizontal {{
+    background: none;
+}}
+
+/* 滑杆（QSlider）手柄与槽尺寸调整 */
+QSlider::groove:horizontal {{
+    height: {dp(scale, 6)}px;
+    background: {panel};
+    border-radius: {dp(scale, 3)}px;
+}}
+QSlider::handle:horizontal {{
+    background: {primary};
+    width: {dp(scale, 16)}px;
+    margin: {dp(scale, -5)}px 0;
+    border-radius: {dp(scale, 8)}px;
+}}
+"""
