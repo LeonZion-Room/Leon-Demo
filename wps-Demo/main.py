@@ -84,6 +84,7 @@ class MainWindow(QWidget):
         super().__init__()
         self.setWindowTitle("PDF工具集")
         # 无边框主窗口
+        # 初始不置顶，待启动图关闭后再置顶
         self.setWindowFlags(Qt.FramelessWindowHint | Qt.Window)
         self.scale = scale if scale is not None else compute_scale(QApplication.instance())
         self.scale = self.scale * 0.55
@@ -517,37 +518,21 @@ def main():
     except Exception:
         pass
 
+
+
     parser = argparse.ArgumentParser(description="PDF工具集主程序")
     parser.add_argument("--scale", type=float, default=None, help="界面缩放比例，例如 1.0、1.25")
     args = parser.parse_args()
 
     app = QApplication(sys.argv)
     scale = args.scale if args.scale is not None else compute_scale(app)
+
+
+
+
     apply_base_font(app, scale)
 
-    # 立即启动主窗口
-    # 在主窗口创建前，保证资源目录就绪（exe 同目录）
-    _ensure_resource_dir("rapidocr_models")
-    _ensure_resource_dir("rapidocr_modelsa")
-
-    w = MainWindow(scale=scale)
-    screen = app.primaryScreen()
-    try:
-        ag = screen.availableGeometry()
-        init_w = max(dp(scale, 840), int(ag.width() * 0.72))
-        init_h = max(dp(scale, 520), int(ag.height() * 0.66))
-        w.resize(init_w, init_h)
-    except Exception:
-        w.resize(dp(scale, 960), dp(scale, 600))
-    w.show()
-    # 保持强引用，避免在某些环境下窗口被提前回收
-    try:
-        setattr(app, "_main_window", w)
-    except Exception:
-        pass
-
-
-    # 启动图线程：不阻塞主界面加载与执行
+    # 启动图：立即创建并显示，尽早出现
     try:
         splash_img = _resource_path(os.path.join("rapidocr_modelsa", "fr.png"))
         if not os.path.exists(splash_img):
@@ -558,13 +543,82 @@ def main():
             fc.preload_image(splash_img)
         except Exception:
             pass
-        splash_thread = SplashThread(splash_img, "http://leyon.top/", delay_ms=100)
-        splash_thread.request.connect(w.on_show_splash)
-        # 防止线程对象被垃圾回收
-        w._splash_thread = splash_thread
-        splash_thread.start()
+        # 直接创建并显示启动图窗口（置顶），然后处理一次事件队列以尽快绘制
+        splash_win = fc.FullScreenImageWindow(splash_img, "http://leyon.top/")
+        splash_win.show()
+        try:
+            splash_win.raise_()
+        except Exception:
+            pass
+        setattr(app, "_splash_window_early", splash_win)
+        try:
+            app.processEvents()
+        except Exception:
+            pass
     except Exception as e:
-        print("启动图线程失败:", e)
+        print("启动图显示失败:", e)
+
+    # 立即启动主窗口
+    # 在主窗口创建前，保证资源目录就绪（exe 同目录）
+    _ensure_resource_dir("rapidocr_models")
+    _ensure_resource_dir("rapidocr_modelsa")
+
+    w = MainWindow(scale=scale)
+
+
+
+
+    screen = app.primaryScreen()
+    try:
+        ag = screen.availableGeometry()
+        init_w = max(dp(scale, 840), int(ag.width() * 0.72))
+        init_h = max(dp(scale, 520), int(ag.height() * 0.66))
+        w.resize(init_w, init_h)
+    except Exception:
+        w.resize(dp(scale, 960), dp(scale, 600))
+    w.show()
+    # 显示后主动提升与激活，确保位于顶层
+    try:
+        w.raise_()
+        w.activateWindow()
+    except Exception:
+        pass
+
+    # 启动图关闭后再将主窗口设为置顶
+    try:
+        splash_win = getattr(app, "_splash_window_early", None)
+        if splash_win:
+            try:
+                # 确保关闭后对象会被销毁，从而触发 destroyed 信号
+                splash_win.setAttribute(Qt.WA_DeleteOnClose, True)
+            except Exception:
+                pass
+
+            def _make_main_topmost():
+                try:
+                    # 将主窗口切换为置顶并重新显示应用标志
+                    w.setWindowFlag(Qt.WindowStaysOnTopHint, True)
+                    w.show()
+                    w.raise_()
+                    w.activateWindow()
+                except Exception:
+                    pass
+
+            try:
+                splash_win.destroyed.connect(lambda *_: _make_main_topmost())
+            except Exception:
+                # 若 destroyed 未触发，使用定时器兜底（3.2s 后）
+                QTimer.singleShot(3200, _make_main_topmost)
+    except Exception:
+        pass
+    # 保持强引用，避免在某些环境下窗口被提前回收
+    try:
+        setattr(app, "_main_window", w)
+    except Exception:
+        pass
+
+
+
 
     sys.exit(app.exec())
 
