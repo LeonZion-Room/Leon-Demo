@@ -3,10 +3,71 @@ import os
 import webbrowser
 import urllib.request
 import urllib.parse
+from functools import lru_cache
 
 from PySide6.QtWidgets import QApplication, QLabel, QMainWindow, QProgressBar, QVBoxLayout, QWidget
 from PySide6.QtCore import Qt, QSize, QTimer
 from PySide6.QtGui import QPixmap, QPainter, QLinearGradient, QColor, QFont
+
+# 简单的 Pixmap 内存缓存，避免重复加载图片导致启动慢
+_PIXMAP_CACHE: dict[str, QPixmap] = {}
+
+def _clean_src(s: str) -> str:
+    return (s or "").strip().strip("`")
+
+@lru_cache(maxsize=16)
+def _fetch_image_bytes(url: str) -> bytes | None:
+    try:
+        req = urllib.request.Request(url, headers={
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
+        })
+        with urllib.request.urlopen(req, timeout=8) as resp:
+            ct = resp.headers.get("Content-Type", "").lower()
+            data = resp.read()
+            if "image" in ct:
+                return data
+            # 尝试从 HTML 中提取 og:image
+            try:
+                html = data.decode("utf-8", errors="ignore")
+                import re
+                m = re.search(r"<meta[^>]+property=[\"']og:image[\"'][^>]+content=[\"']([^\"']+)[\"']", html, re.I)
+                if not m:
+                    m = re.search(r"<meta[^>]+content=[\"']([^\"']+)[\"'][^>]+property=[\"']og:image[\"']", html, re.I)
+                if m:
+                    img_url = urllib.parse.urljoin(url, m.group(1))
+                    return _fetch_image_bytes(img_url)
+            except Exception:
+                pass
+            return None
+    except Exception:
+        return None
+
+def preload_image(image_path_or_url: str) -> None:
+    """预加载图片到内存缓存，加速后续显示。"""
+    try:
+        src = _clean_src(image_path_or_url or "")
+        if not src or src in _PIXMAP_CACHE:
+            return
+        p: QPixmap | None = None
+        if src.startswith("http://") or src.startswith("https://"):
+            data = _fetch_image_bytes(src)
+            if data:
+                q = QPixmap()
+                if q.loadFromData(data):
+                    p = q
+        else:
+            # 支持 file:// 协议与本地路径
+            if src.startswith("file://"):
+                local_path = urllib.parse.urlparse(src).path
+                if os.path.exists(local_path):
+                    p = QPixmap(local_path)
+            elif os.path.exists(src):
+                p = QPixmap(src)
+        if p and not p.isNull():
+            _PIXMAP_CACHE[src] = p
+    except Exception:
+        pass
 
 
 class ImageCoverWidget(QWidget):
@@ -62,7 +123,13 @@ class FullScreenImageWindow(QMainWindow):
         self.setCentralWidget(container)
         self.setCursor(Qt.PointingHandCursor)
 
-        pixmap = self.load_image(image_path_or_url)
+        # 优先使用缓存，加速显示
+        s = _clean_src(image_path_or_url or "")
+        pixmap = _PIXMAP_CACHE.get(s)
+        if pixmap is None or pixmap.isNull():
+            pixmap = self.load_image(image_path_or_url)
+            if pixmap and not pixmap.isNull():
+                _PIXMAP_CACHE[s] = pixmap
         self.original_pixmap = pixmap
         self.adjust_initial_size_and_center(pixmap)
         self.image.setPixmap(self.original_pixmap)
@@ -79,35 +146,7 @@ class FullScreenImageWindow(QMainWindow):
         size = screen.size() if screen else QSize(1920, 1080)
 
 
-        def _clean_src(s: str) -> str:
-            return (s or "").strip().strip("`")
-
-        def _fetch_image_bytes(url: str) -> bytes | None:
-            try:
-                req = urllib.request.Request(url, headers={
-                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36",
-                    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
-                })
-                with urllib.request.urlopen(req, timeout=8) as resp:
-                    ct = resp.headers.get("Content-Type", "").lower()
-                    data = resp.read()
-                    if "image" in ct:
-                        return data
-                    # 尝试从 HTML 中提取 og:image
-                    try:
-                        html = data.decode("utf-8", errors="ignore")
-                        import re
-                        m = re.search(r"<meta[^>]+property=[\"']og:image[\"'][^>]+content=[\"']([^\"']+)[\"']", html, re.I)
-                        if not m:
-                            m = re.search(r"<meta[^>]+content=[\"']([^\"']+)[\"'][^>]+property=[\"']og:image[\"']", html, re.I)
-                        if m:
-                            img_url = urllib.parse.urljoin(url, m.group(1))
-                            return _fetch_image_bytes(img_url)
-                    except Exception:
-                        pass
-                    return None
-            except Exception:
-                return None
+        # 顶层缓存与下载函数已重构到模块级，以便复用与预加载
 
         pixmap = None
         src = _clean_src(image_path_or_url or "")

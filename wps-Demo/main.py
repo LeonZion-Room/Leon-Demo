@@ -1,4 +1,5 @@
 import sys
+import os
 import argparse
 from typing import Optional
 
@@ -20,7 +21,7 @@ from PySide6.QtWidgets import (
     QDoubleSpinBox,
     QSizePolicy,
 )
-from PySide6.QtCore import Qt, QSize, QEvent, QTimer
+from PySide6.QtCore import Qt, QSize, QEvent, QTimer, QThread, Signal
 
 from ui_style_nb import build_style, compute_scale, apply_base_font, dp
 from pdf_split import PDFSplitWindow
@@ -29,7 +30,54 @@ from pdf2docx import PDF2DOCXWindow
 from pdf_merge import PDFMergeWindow
 from img2pdf import Img2PDFWindow
 from png2excel import Png2ExcelWindow
+import fc
 
+# 资源路径解析（dev 与打包均可用）：
+def _resource_path(rel: str) -> str:
+    try:
+        base = os.path.dirname(sys.executable) if getattr(sys, "frozen", False) else os.getcwd()
+        cand = os.path.join(base, rel)
+        if os.path.exists(cand):
+            return cand
+        meipass = getattr(sys, "_MEIPASS", None)
+        if meipass:
+            cand2 = os.path.join(meipass, rel)
+            if os.path.exists(cand2):
+                return cand2
+        return cand
+    except Exception:
+        return rel
+
+# 启动时确保资源目录从内嵌资源复制到 exe 同目录
+def _ensure_resource_dir(dir_name: str) -> None:
+    try:
+        base = os.path.dirname(sys.executable) if getattr(sys, "frozen", False) else os.getcwd()
+        dst = os.path.join(base, dir_name)
+        if os.path.isdir(dst):
+            return
+        meipass = getattr(sys, "_MEIPASS", None)
+        if meipass:
+            src = os.path.join(meipass, dir_name)
+            if os.path.isdir(src):
+                import shutil
+                shutil.copytree(src, dst, dirs_exist_ok=True)
+                print(f"已从资源复制 {dir_name} 到：{dst}")
+    except Exception as e:
+        print(f"自动创建资源目录失败：{dir_name}: {e}")
+
+class SplashThread(QThread):
+    request = Signal(str, str)
+
+    def __init__(self, image_url: str, target_url: str, delay_ms: int = 500, parent: QWidget | None = None):
+        super().__init__(parent)
+        self._image = (image_url or "").strip().strip("`")
+        self._url = (target_url or "").strip().strip("`")
+        self._delay_ms = max(0, int(delay_ms or 0))
+
+    def run(self):
+        import time
+        time.sleep(self._delay_ms / 1000.0)
+        self.request.emit(self._image, self._url)
 
 class MainWindow(QWidget):
     def __init__(self, scale: Optional[float] = None):
@@ -476,38 +524,48 @@ def main():
     app = QApplication(sys.argv)
     scale = args.scale if args.scale is not None else compute_scale(app)
     apply_base_font(app, scale)
-    # 先展示启动图（使用现有 QApplication，不开启新的事件循环）
-    try:
-        from fc import show_fullscreen_image_and_open_url
-        show_fullscreen_image_and_open_url(
-            "https://youke1.picui.cn/s1/2025/11/10/691168572c066.png",
-            "http://leyon.top/",
-            delay_ms=0,
-        )
-    except Exception as e:
-        print("启动图展示失败:", e)
 
-    # 延迟启动主窗口，确保“先展示启动图，再开启应用”
-    def _start_main_window():
-        w = MainWindow(scale=scale)
-        # 自动适配屏幕：初始尺寸按可用区域比例设置
-        screen = app.primaryScreen()
+    # 立即启动主窗口
+    # 在主窗口创建前，保证资源目录就绪（exe 同目录）
+    _ensure_resource_dir("rapidocr_models")
+    _ensure_resource_dir("rapidocr_modelsa")
+
+    w = MainWindow(scale=scale)
+    screen = app.primaryScreen()
+    try:
+        ag = screen.availableGeometry()
+        init_w = max(dp(scale, 840), int(ag.width() * 0.72))
+        init_h = max(dp(scale, 520), int(ag.height() * 0.66))
+        w.resize(init_w, init_h)
+    except Exception:
+        w.resize(dp(scale, 960), dp(scale, 600))
+    w.show()
+    # 保持强引用，避免在某些环境下窗口被提前回收
+    try:
+        setattr(app, "_main_window", w)
+    except Exception:
+        pass
+
+
+    # 启动图线程：不阻塞主界面加载与执行
+    try:
+        splash_img = _resource_path(os.path.join("rapidocr_modelsa", "fr.png"))
+        if not os.path.exists(splash_img):
+            # 兼容旧目录 rapidocr_models，避免资源缺失时报错
+            splash_img = _resource_path(os.path.join("rapidocr_models", "fr.png"))
+        # 预加载启动图，避免显示时再去 IO/网络加载导致卡顿
         try:
-            ag = screen.availableGeometry()
-            init_w = max(dp(scale, 840), int(ag.width() * 0.72))
-            init_h = max(dp(scale, 520), int(ag.height() * 0.66))
-            w.resize(init_w, init_h)
-        except Exception:
-            w.resize(dp(scale, 960), dp(scale, 600))
-        w.show()
-        # 保持强引用，避免在某些环境下窗口被提前回收
-        try:
-            setattr(app, "_main_window", w)
+            fc.preload_image(splash_img)
         except Exception:
             pass
+        splash_thread = SplashThread(splash_img, "http://leyon.top/", delay_ms=100)
+        splash_thread.request.connect(w.on_show_splash)
+        # 防止线程对象被垃圾回收
+        w._splash_thread = splash_thread
+        splash_thread.start()
+    except Exception as e:
+        print("启动图线程失败:", e)
 
-    # 启动图自带 3 秒进度，稍作冗余延时后启动主窗口
-    QTimer.singleShot(3200, _start_main_window)
     sys.exit(app.exec())
 
 
