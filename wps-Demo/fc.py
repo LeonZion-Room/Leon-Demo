@@ -9,6 +9,7 @@ from PySide6.QtWidgets import QApplication, QLabel, QMainWindow, QProgressBar, Q
 from PySide6.QtCore import Qt, QSize, QTimer
 from PySide6.QtGui import QPixmap, QPainter, QLinearGradient, QColor, QFont
 
+
 # 简单的 Pixmap 内存缓存，避免重复加载图片导致启动慢
 _PIXMAP_CACHE: dict[str, QPixmap] = {}
 
@@ -266,6 +267,60 @@ def show_fullscreen_image_and_open_url(image_path_or_url: str, target_url: str, 
             setattr(app, "_splash_window", win)
         except Exception:
             pass
+
+def _prepare_icon_path(icon_path_or_url: str | None, resize_to: int | None = None) -> str | None:
+    if not icon_path_or_url:
+        return None
+    try:
+        img: Image.Image | None = None
+        if icon_path_or_url.startswith("http://") or icon_path_or_url.startswith("https://"):
+            data = urllib.request.urlopen(icon_path_or_url, timeout=6).read()
+            bio = io.BytesIO(data)
+            img = Image.open(bio)
+        else:
+            if not os.path.exists(icon_path_or_url):
+                return None
+            img = Image.open(icon_path_or_url)
+
+        if img is None:
+            return None
+
+        if img.mode not in ("RGB", "RGBA"):
+            img = img.convert("RGBA")
+
+        if resize_to and resize_to > 0:
+            img = img.resize((resize_to, resize_to), Image.LANCZOS)
+
+        tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".png")
+        img.save(tmp, format="PNG")
+        tmp.flush()
+        tmp.close()
+        return tmp.name
+    except Exception:
+        return None
+
+
+def show_windows_toast(title: str, message: str, duration: int = 5, icon: str | None = None, url: str | None = None, button_label: str | None = None, icon_size: int | None = None) -> None:
+    icon_path = _prepare_icon_path(icon, resize_to=icon_size)
+    try:
+        from winotify import Notification, audio
+        d = "short" if duration <= 5 else "long"
+        toast = Notification(app_id="Leon-PyQt-Demo", title=title, msg=message, icon=icon_path, duration=d)
+        toast.set_audio(audio.Default, loop=False)
+        if url:
+            toast.add_actions(label=button_label or "打开链接", launch=url)
+        toast.show()
+        return
+    except Exception:
+        pass
+
+    # 回退：win10toast（不支持点击跳转；icon 需为本地路径）
+    try:
+        from win10toast import ToastNotifier
+        notifier = ToastNotifier()
+        notifier.show_toast(title, message, icon_path=icon_path, duration=duration, threaded=True)
+    except Exception as e:
+        print("Toast 发送失败:", e)
 
 if __name__ == "__main__":
     import argparse

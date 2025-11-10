@@ -26,12 +26,16 @@ from PySide6.QtCore import Qt, QSize, QEvent, QTimer, QThread, Signal
 from ui_style_nb import build_style, compute_scale, apply_base_font, dp
 from pdf_split import PDFSplitWindow
 from pdf2images import PdfToImagesWindow
+from pdf2oneimage import PdfToOneImageWindow
+from pdf2imagepdf import PdfToImagePDFWindow
+from pdf_shrink import PDFShrinkWindow
 from pdf2docx import PDF2DOCXWindow
 from pdf_merge import PDFMergeWindow
 from img2pdf import Img2PDFWindow
 from png2excel import Png2ExcelWindow
+from fc import show_windows_toast
 import fc
-
+# 尝试可选的系统通知支持（不存在时静默忽略）
 # 资源路径解析（dev 与打包均可用）：
 def _resource_path(rel: str) -> str:
     try:
@@ -153,7 +157,7 @@ class MainWindow(QWidget):
         self.sidebar = QListWidget()
         self.sidebar.setFixedWidth(dp(self.scale, 160))
         self.sidebar.setUniformItemSizes(True)
-        for name in ("PDF合并", "PDF拆分", "PDF转图片", "图片转PDF", "PDF转DOCX", "图片转Excel"):
+        for name in ("PDF合并", "PDF拆分", "PDF转图片", "PDF转一张图片", "PDF转纯图PDF", "PDF瘦身", "图片转PDF", "PDF转DOCX", "图片转Excel"):
             item = QListWidgetItem(name)
             item.setTextAlignment(Qt.AlignCenter)
             self.sidebar.addItem(item)
@@ -190,6 +194,19 @@ class MainWindow(QWidget):
         self.page_images.setWindowFlags(Qt.Widget)
         self.page_images.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
+        self.page_oneimage = PdfToOneImageWindow(scale=self.scale, embedded=True)
+        self.page_oneimage.setWindowFlags(Qt.Widget)
+        self.page_oneimage.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+
+        self.page_imagepdf = PdfToImagePDFWindow(scale=self.scale, embedded=True)
+        self.page_imagepdf.setWindowFlags(Qt.Widget)
+        self.page_imagepdf.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+
+        # PDF 瘦身页：将 PDF 转为压缩的纯图 PDF
+        self.page_shrink = PDFShrinkWindow(scale=self.scale, embedded=True)
+        self.page_shrink.setWindowFlags(Qt.Widget)
+        self.page_shrink.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+
         self.page_img2pdf = Img2PDFWindow(scale=self.scale, embedded=True)
         self.page_img2pdf.setWindowFlags(Qt.Widget)
         self.page_img2pdf.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
@@ -206,6 +223,9 @@ class MainWindow(QWidget):
         self.stack.addWidget(self.page_merge)
         self.stack.addWidget(self.page_split)
         self.stack.addWidget(self.page_images)
+        self.stack.addWidget(self.page_oneimage)
+        self.stack.addWidget(self.page_imagepdf)
+        self.stack.addWidget(self.page_shrink)
         self.stack.addWidget(self.page_img2pdf)
         self.stack.addWidget(self.page_docx)
         self.stack.addWidget(self.page_png2excel)
@@ -265,6 +285,9 @@ class MainWindow(QWidget):
         self._install_resize_watch(self.page_merge)
         self._install_resize_watch(self.page_split)
         self._install_resize_watch(self.page_images)
+        self._install_resize_watch(self.page_oneimage)
+        self._install_resize_watch(self.page_imagepdf)
+        self._install_resize_watch(self.page_shrink)
         self._install_resize_watch(self.page_img2pdf)
         self._install_resize_watch(self.page_docx)
         self._install_resize_watch(self.page_png2excel)
@@ -375,6 +398,48 @@ class MainWindow(QWidget):
             if hasattr(self.page_images, "_apply_responsive_sizes"):
                 try:
                     self.page_images._apply_responsive_sizes()
+                except Exception:
+                    pass
+        except Exception:
+            pass
+        try:
+            # PDF 转一张图片页
+            self.page_oneimage.scale = self.scale
+            if hasattr(self.page_oneimage, "_apply_style"):
+                self.page_oneimage._apply_style()
+            else:
+                self.page_oneimage.setStyleSheet(build_style(self.scale))
+            if hasattr(self.page_oneimage, "_apply_responsive_sizes"):
+                try:
+                    self.page_oneimage._apply_responsive_sizes()
+                except Exception:
+                    pass
+        except Exception:
+            pass
+        try:
+            # PDF 转纯图 PDF 页
+            self.page_imagepdf.scale = self.scale
+            if hasattr(self.page_imagepdf, "_apply_style"):
+                self.page_imagepdf._apply_style()
+            else:
+                self.page_imagepdf.setStyleSheet(build_style(self.scale))
+            if hasattr(self.page_imagepdf, "_apply_responsive_sizes"):
+                try:
+                    self.page_imagepdf._apply_responsive_sizes()
+                except Exception:
+                    pass
+        except Exception:
+            pass
+        try:
+            # PDF 瘦身页
+            self.page_shrink.scale = self.scale
+            if hasattr(self.page_shrink, "_apply_style"):
+                self.page_shrink._apply_style()
+            else:
+                self.page_shrink.setStyleSheet(build_style(self.scale))
+            if hasattr(self.page_shrink, "_apply_responsive_sizes"):
+                try:
+                    self.page_shrink._apply_responsive_sizes()
                 except Exception:
                     pass
         except Exception:
@@ -596,11 +661,26 @@ def main():
 
             def _make_main_topmost():
                 try:
-                    # 将主窗口切换为置顶并重新显示应用标志
+                    # 避免重复置顶与重复定时
+                    if getattr(w, "_topmost_scheduled", False):
+                        return
+                    # 临时置顶
                     w.setWindowFlag(Qt.WindowStaysOnTopHint, True)
                     w.show()
                     w.raise_()
                     w.activateWindow()
+                    setattr(w, "_topmost_scheduled", True)
+
+                    # 3 秒后取消置顶（不再永远置顶）
+                    def _unset_topmost():
+                        try:
+                            w.setWindowFlag(Qt.WindowStaysOnTopHint, False)
+                            w.show()
+                            w.raise_()
+                            w.activateWindow()
+                        except Exception:
+                            pass
+                    QTimer.singleShot(3000, _unset_topmost)
                 except Exception:
                     pass
 
@@ -624,4 +704,6 @@ def main():
 
 
 if __name__ == "__main__":
+    # show_windows_toast("LZ-Studio", "项目启动中，请稍等 ...")
+
     main()
