@@ -191,7 +191,11 @@ class MergeWorker(QThread):
 class PDFMergeWindow(QWidget):
     def __init__(self, scale: Optional[float] = None, embedded: bool = False):
         super().__init__()
-        self.setWindowFlags(Qt.FramelessWindowHint | Qt.Window)
+        # 根据 embedded 决定窗口标志，避免后续切换导致内部对象（布局）被销毁
+        try:
+            self.setWindowFlags(Qt.Widget if embedded else (Qt.FramelessWindowHint | Qt.Window))
+        except Exception:
+            pass
         self.scale = scale if scale is not None else compute_scale(QApplication.instance())
         self.embedded = embedded
         self.resize(dp(self.scale, 900), dp(self.scale, 600))
@@ -436,7 +440,19 @@ class PDFMergeWindow(QWidget):
 
     def _reflow_layout(self):
         # 根据当前可用宽度，决定左右并排或上下堆叠
-        spacing = self.main_row.spacing()
+        # 防御：main_row 在某些窗口标志切换或销毁场景下可能失效
+        try:
+            import shiboken6
+        except Exception:
+            shiboken6 = None
+        if not hasattr(self, "main_row"):
+            return
+        if shiboken6 and hasattr(shiboken6, "isValid") and not shiboken6.isValid(self.main_row):
+            return
+        try:
+            spacing = self.main_row.spacing()
+        except RuntimeError:
+            return
         m = self.contentsMargins()
         avail_w = max(0, self.width() - m.left() - m.right())
         left_w = self.left_card.sizeHint().width()

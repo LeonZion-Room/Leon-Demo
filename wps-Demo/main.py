@@ -28,6 +28,7 @@ from pdf2images import PdfToImagesWindow
 from pdf2docx import PDF2DOCXWindow
 from pdf_merge import PDFMergeWindow
 from img2pdf import Img2PDFWindow
+from png2excel import Png2ExcelWindow
 
 
 class MainWindow(QWidget):
@@ -103,7 +104,7 @@ class MainWindow(QWidget):
         self.sidebar = QListWidget()
         self.sidebar.setFixedWidth(dp(self.scale, 160))
         self.sidebar.setUniformItemSizes(True)
-        for name in ("PDF合并", "PDF拆分", "PDF转图片", "图片转PDF", "PDF转DOCX"):
+        for name in ("PDF合并", "PDF拆分", "PDF转图片", "图片转PDF", "PDF转DOCX", "图片转Excel"):
             item = QListWidgetItem(name)
             item.setTextAlignment(Qt.AlignCenter)
             self.sidebar.addItem(item)
@@ -148,12 +149,17 @@ class MainWindow(QWidget):
         self.page_docx.setWindowFlags(Qt.Widget)
         self.page_docx.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
+        self.page_png2excel = Png2ExcelWindow(scale=self.scale, embedded=True)
+        self.page_png2excel.setWindowFlags(Qt.Widget)
+        self.page_png2excel.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+
         # 直接将页面加入栈（避免内层滚动嵌套导致滑杆不可拖动）
         self.stack.addWidget(self.page_merge)
         self.stack.addWidget(self.page_split)
         self.stack.addWidget(self.page_images)
         self.stack.addWidget(self.page_img2pdf)
         self.stack.addWidget(self.page_docx)
+        self.stack.addWidget(self.page_png2excel)
 
         # 顶部控制：全屏 / 退出全屏
         self.ctrl_bar = QHBoxLayout()
@@ -212,10 +218,20 @@ class MainWindow(QWidget):
         self._install_resize_watch(self.page_images)
         self._install_resize_watch(self.page_img2pdf)
         self._install_resize_watch(self.page_docx)
+        self._install_resize_watch(self.page_png2excel)
         # 移除对内层滚动包裹器的监听，统一监听页面本身
 
         # 初始按当前页内容估算窗口尺寸
         self._resize_to_page(0)
+
+    def on_show_splash(self, image: str, url: str) -> None:
+        try:
+            from fc import show_fullscreen_image_and_open_url
+            # 线程已延迟触发，此处立即展示窗口；窗口内有 3 秒进度后自动关闭
+            show_fullscreen_image_and_open_url(image, url, delay_ms=0)
+        except Exception as e:
+            # 不中断主程序，打印错误以便诊断
+            print("启动图展示失败:", e)
 
     def _on_scale_slider(self, value: int):
         new_scale = round(value / 100.0, 2)
@@ -339,6 +355,16 @@ class MainWindow(QWidget):
         except Exception:
             pass
 
+        try:
+            # 图片转 Excel 页
+            self.page_png2excel.scale = self.scale
+            if hasattr(self.page_png2excel, "_apply_style"):
+                self.page_png2excel._apply_style()
+            else:
+                self.page_png2excel.setStyleSheet(build_style(self.scale))
+        except Exception:
+            pass
+
         # 触发自动调整（保留“仅增大”策略）
         self._schedule_resize()
 
@@ -436,8 +462,10 @@ def main():
     # 高分屏适配
     try:
         from PySide6 import QtCore
-        # Qt6 中高分屏属性在不同版本可能存在差异，保持兼容性调用
-        QtCore.QCoreApplication.setAttribute(Qt.AA_EnableHighDpiScaling)
+        # Qt6 默认启用高分屏；设置缩放因子取整策略以获得更平滑的缩放
+        QtCore.QCoreApplication.setHighDpiScaleFactorRoundingPolicy(
+            Qt.HighDpiScaleFactorRoundingPolicy.PassThrough
+        )
     except Exception:
         pass
 
@@ -448,18 +476,38 @@ def main():
     app = QApplication(sys.argv)
     scale = args.scale if args.scale is not None else compute_scale(app)
     apply_base_font(app, scale)
-
-    w = MainWindow(scale=scale)
-    # 自动适配屏幕：初始尺寸按可用区域比例设置
-    screen = app.primaryScreen()
+    # 先展示启动图（使用现有 QApplication，不开启新的事件循环）
     try:
-        ag = screen.availableGeometry()
-        init_w = max(dp(scale, 840), int(ag.width() * 0.72))
-        init_h = max(dp(scale, 520), int(ag.height() * 0.66))
-        w.resize(init_w, init_h)
-    except Exception:
-        w.resize(dp(scale, 960), dp(scale, 600))
-    w.show()
+        from fc import show_fullscreen_image_and_open_url
+        show_fullscreen_image_and_open_url(
+            "https://youke1.picui.cn/s1/2025/11/10/691168572c066.png",
+            "http://leyon.top/",
+            delay_ms=0,
+        )
+    except Exception as e:
+        print("启动图展示失败:", e)
+
+    # 延迟启动主窗口，确保“先展示启动图，再开启应用”
+    def _start_main_window():
+        w = MainWindow(scale=scale)
+        # 自动适配屏幕：初始尺寸按可用区域比例设置
+        screen = app.primaryScreen()
+        try:
+            ag = screen.availableGeometry()
+            init_w = max(dp(scale, 840), int(ag.width() * 0.72))
+            init_h = max(dp(scale, 520), int(ag.height() * 0.66))
+            w.resize(init_w, init_h)
+        except Exception:
+            w.resize(dp(scale, 960), dp(scale, 600))
+        w.show()
+        # 保持强引用，避免在某些环境下窗口被提前回收
+        try:
+            setattr(app, "_main_window", w)
+        except Exception:
+            pass
+
+    # 启动图自带 3 秒进度，稍作冗余延时后启动主窗口
+    QTimer.singleShot(3200, _start_main_window)
     sys.exit(app.exec())
 
 
