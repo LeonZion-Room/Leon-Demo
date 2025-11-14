@@ -1,4 +1,5 @@
 import sys
+import os
 import argparse
 from typing import Optional
 
@@ -20,21 +21,74 @@ from PySide6.QtWidgets import (
     QDoubleSpinBox,
     QSizePolicy,
 )
-from PySide6.QtCore import Qt, QSize, QEvent, QTimer
+from PySide6.QtCore import Qt, QSize, QEvent, QTimer, QThread, Signal
 
 from ui_style_nb import build_style, compute_scale, apply_base_font, dp
 from pdf_split import PDFSplitWindow
 from pdf2images import PdfToImagesWindow
+from pdf2oneimage import PdfToOneImageWindow
+from pdf2imagepdf import PdfToImagePDFWindow
+from pdf_shrink import PDFShrinkWindow
 from pdf2docx import PDF2DOCXWindow
 from pdf_merge import PDFMergeWindow
 from img2pdf import Img2PDFWindow
+from png2excel import Png2ExcelWindow
+from fc import show_windows_toast
+import fc
+# 尝试可选的系统通知支持（不存在时静默忽略）
+# 资源路径解析（dev 与打包均可用）：
+def _resource_path(rel: str) -> str:
+    try:
+        base = os.path.dirname(sys.executable) if getattr(sys, "frozen", False) else os.getcwd()
+        cand = os.path.join(base, rel)
+        if os.path.exists(cand):
+            return cand
+        meipass = getattr(sys, "_MEIPASS", None)
+        if meipass:
+            cand2 = os.path.join(meipass, rel)
+            if os.path.exists(cand2):
+                return cand2
+        return cand
+    except Exception:
+        return rel
 
+# 启动时确保资源目录从内嵌资源复制到 exe 同目录
+def _ensure_resource_dir(dir_name: str) -> None:
+    try:
+        base = os.path.dirname(sys.executable) if getattr(sys, "frozen", False) else os.getcwd()
+        dst = os.path.join(base, dir_name)
+        if os.path.isdir(dst):
+            return
+        meipass = getattr(sys, "_MEIPASS", None)
+        if meipass:
+            src = os.path.join(meipass, dir_name)
+            if os.path.isdir(src):
+                import shutil
+                shutil.copytree(src, dst, dirs_exist_ok=True)
+                print(f"已从资源复制 {dir_name} 到：{dst}")
+    except Exception as e:
+        print(f"自动创建资源目录失败：{dir_name}: {e}")
+
+class SplashThread(QThread):
+    request = Signal(str, str)
+
+    def __init__(self, image_url: str, target_url: str, delay_ms: int = 500, parent: QWidget | None = None):
+        super().__init__(parent)
+        self._image = (image_url or "").strip().strip("`")
+        self._url = (target_url or "").strip().strip("`")
+        self._delay_ms = max(0, int(delay_ms or 0))
+
+    def run(self):
+        import time
+        time.sleep(self._delay_ms / 1000.0)
+        self.request.emit(self._image, self._url)
 
 class MainWindow(QWidget):
     def __init__(self, scale: Optional[float] = None):
         super().__init__()
         self.setWindowTitle("PDF工具集")
         # 无边框主窗口
+        # 初始不置顶，待启动图关闭后再置顶
         self.setWindowFlags(Qt.FramelessWindowHint | Qt.Window)
         self.scale = scale if scale is not None else compute_scale(QApplication.instance())
         self.scale = self.scale * 0.55
@@ -103,7 +157,7 @@ class MainWindow(QWidget):
         self.sidebar = QListWidget()
         self.sidebar.setFixedWidth(dp(self.scale, 160))
         self.sidebar.setUniformItemSizes(True)
-        for name in ("PDF合并", "PDF拆分", "PDF转图片", "图片转PDF", "PDF转DOCX"):
+        for name in ("PDF合并", "PDF拆分", "PDF转图片", "PDF转一张图片", "PDF转纯图PDF", "PDF瘦身", "图片转PDF", "PDF转DOCX", "图片转Excel"):
             item = QListWidgetItem(name)
             item.setTextAlignment(Qt.AlignCenter)
             self.sidebar.addItem(item)
@@ -140,6 +194,19 @@ class MainWindow(QWidget):
         self.page_images.setWindowFlags(Qt.Widget)
         self.page_images.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
+        self.page_oneimage = PdfToOneImageWindow(scale=self.scale, embedded=True)
+        self.page_oneimage.setWindowFlags(Qt.Widget)
+        self.page_oneimage.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+
+        self.page_imagepdf = PdfToImagePDFWindow(scale=self.scale, embedded=True)
+        self.page_imagepdf.setWindowFlags(Qt.Widget)
+        self.page_imagepdf.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+
+        # PDF 瘦身页：将 PDF 转为压缩的纯图 PDF
+        self.page_shrink = PDFShrinkWindow(scale=self.scale, embedded=True)
+        self.page_shrink.setWindowFlags(Qt.Widget)
+        self.page_shrink.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+
         self.page_img2pdf = Img2PDFWindow(scale=self.scale, embedded=True)
         self.page_img2pdf.setWindowFlags(Qt.Widget)
         self.page_img2pdf.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
@@ -148,12 +215,20 @@ class MainWindow(QWidget):
         self.page_docx.setWindowFlags(Qt.Widget)
         self.page_docx.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
+        self.page_png2excel = Png2ExcelWindow(scale=self.scale, embedded=True)
+        self.page_png2excel.setWindowFlags(Qt.Widget)
+        self.page_png2excel.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+
         # 直接将页面加入栈（避免内层滚动嵌套导致滑杆不可拖动）
         self.stack.addWidget(self.page_merge)
         self.stack.addWidget(self.page_split)
         self.stack.addWidget(self.page_images)
+        self.stack.addWidget(self.page_oneimage)
+        self.stack.addWidget(self.page_imagepdf)
+        self.stack.addWidget(self.page_shrink)
         self.stack.addWidget(self.page_img2pdf)
         self.stack.addWidget(self.page_docx)
+        self.stack.addWidget(self.page_png2excel)
 
         # 顶部控制：全屏 / 退出全屏
         self.ctrl_bar = QHBoxLayout()
@@ -210,12 +285,25 @@ class MainWindow(QWidget):
         self._install_resize_watch(self.page_merge)
         self._install_resize_watch(self.page_split)
         self._install_resize_watch(self.page_images)
+        self._install_resize_watch(self.page_oneimage)
+        self._install_resize_watch(self.page_imagepdf)
+        self._install_resize_watch(self.page_shrink)
         self._install_resize_watch(self.page_img2pdf)
         self._install_resize_watch(self.page_docx)
+        self._install_resize_watch(self.page_png2excel)
         # 移除对内层滚动包裹器的监听，统一监听页面本身
 
         # 初始按当前页内容估算窗口尺寸
         self._resize_to_page(0)
+
+    def on_show_splash(self, image: str, url: str) -> None:
+        try:
+            from fc import show_fullscreen_image_and_open_url
+            # 线程已延迟触发，此处立即展示窗口；窗口内有 3 秒进度后自动关闭
+            show_fullscreen_image_and_open_url(image, url, delay_ms=0)
+        except Exception as e:
+            # 不中断主程序，打印错误以便诊断
+            print("启动图展示失败:", e)
 
     def _on_scale_slider(self, value: int):
         new_scale = round(value / 100.0, 2)
@@ -315,6 +403,48 @@ class MainWindow(QWidget):
         except Exception:
             pass
         try:
+            # PDF 转一张图片页
+            self.page_oneimage.scale = self.scale
+            if hasattr(self.page_oneimage, "_apply_style"):
+                self.page_oneimage._apply_style()
+            else:
+                self.page_oneimage.setStyleSheet(build_style(self.scale))
+            if hasattr(self.page_oneimage, "_apply_responsive_sizes"):
+                try:
+                    self.page_oneimage._apply_responsive_sizes()
+                except Exception:
+                    pass
+        except Exception:
+            pass
+        try:
+            # PDF 转纯图 PDF 页
+            self.page_imagepdf.scale = self.scale
+            if hasattr(self.page_imagepdf, "_apply_style"):
+                self.page_imagepdf._apply_style()
+            else:
+                self.page_imagepdf.setStyleSheet(build_style(self.scale))
+            if hasattr(self.page_imagepdf, "_apply_responsive_sizes"):
+                try:
+                    self.page_imagepdf._apply_responsive_sizes()
+                except Exception:
+                    pass
+        except Exception:
+            pass
+        try:
+            # PDF 瘦身页
+            self.page_shrink.scale = self.scale
+            if hasattr(self.page_shrink, "_apply_style"):
+                self.page_shrink._apply_style()
+            else:
+                self.page_shrink.setStyleSheet(build_style(self.scale))
+            if hasattr(self.page_shrink, "_apply_responsive_sizes"):
+                try:
+                    self.page_shrink._apply_responsive_sizes()
+                except Exception:
+                    pass
+        except Exception:
+            pass
+        try:
             # 图片转 PDF 页
             self.page_img2pdf.scale = self.scale
             if hasattr(self.page_img2pdf, "_apply_style"):
@@ -336,6 +466,16 @@ class MainWindow(QWidget):
                 self.page_docx._apply_style()
             else:
                 self.page_docx.setStyleSheet(build_style(self.scale))
+        except Exception:
+            pass
+
+        try:
+            # 图片转 Excel 页
+            self.page_png2excel.scale = self.scale
+            if hasattr(self.page_png2excel, "_apply_style"):
+                self.page_png2excel._apply_style()
+            else:
+                self.page_png2excel.setStyleSheet(build_style(self.scale))
         except Exception:
             pass
 
@@ -436,10 +576,14 @@ def main():
     # 高分屏适配
     try:
         from PySide6 import QtCore
-        # Qt6 中高分屏属性在不同版本可能存在差异，保持兼容性调用
-        QtCore.QCoreApplication.setAttribute(Qt.AA_EnableHighDpiScaling)
+        # Qt6 默认启用高分屏；设置缩放因子取整策略以获得更平滑的缩放
+        QtCore.QCoreApplication.setHighDpiScaleFactorRoundingPolicy(
+            Qt.HighDpiScaleFactorRoundingPolicy.PassThrough
+        )
     except Exception:
         pass
+
+
 
     parser = argparse.ArgumentParser(description="PDF工具集主程序")
     parser.add_argument("--scale", type=float, default=None, help="界面缩放比例，例如 1.0、1.25")
@@ -447,10 +591,48 @@ def main():
 
     app = QApplication(sys.argv)
     scale = args.scale if args.scale is not None else compute_scale(app)
+
+
+
+
     apply_base_font(app, scale)
 
+    # 启动图：立即创建并显示，尽早出现
+    try:
+        splash_img = _resource_path(os.path.join("rapidocr_modelsa", "fr.png"))
+        if not os.path.exists(splash_img):
+            # 兼容旧目录 rapidocr_models，避免资源缺失时报错
+            splash_img = _resource_path(os.path.join("rapidocr_models", "fr.png"))
+        # 预加载启动图，避免显示时再去 IO/网络加载导致卡顿
+        try:
+            fc.preload_image(splash_img)
+        except Exception:
+            pass
+        # 直接创建并显示启动图窗口（置顶），然后处理一次事件队列以尽快绘制
+        splash_win = fc.FullScreenImageWindow(splash_img, "http://leyon.top/")
+        splash_win.show()
+        try:
+            splash_win.raise_()
+        except Exception:
+            pass
+        setattr(app, "_splash_window_early", splash_win)
+        try:
+            app.processEvents()
+        except Exception:
+            pass
+    except Exception as e:
+        print("启动图显示失败:", e)
+
+    # 立即启动主窗口
+    # 在主窗口创建前，保证资源目录就绪（exe 同目录）
+    _ensure_resource_dir("rapidocr_models")
+    _ensure_resource_dir("rapidocr_modelsa")
+
     w = MainWindow(scale=scale)
-    # 自动适配屏幕：初始尺寸按可用区域比例设置
+
+
+
+
     screen = app.primaryScreen()
     try:
         ag = screen.availableGeometry()
@@ -460,8 +642,68 @@ def main():
     except Exception:
         w.resize(dp(scale, 960), dp(scale, 600))
     w.show()
+    # 显示后主动提升与激活，确保位于顶层
+    try:
+        w.raise_()
+        w.activateWindow()
+    except Exception:
+        pass
+
+    # 启动图关闭后再将主窗口设为置顶
+    try:
+        splash_win = getattr(app, "_splash_window_early", None)
+        if splash_win:
+            try:
+                # 确保关闭后对象会被销毁，从而触发 destroyed 信号
+                splash_win.setAttribute(Qt.WA_DeleteOnClose, True)
+            except Exception:
+                pass
+
+            def _make_main_topmost():
+                try:
+                    # 避免重复置顶与重复定时
+                    if getattr(w, "_topmost_scheduled", False):
+                        return
+                    # 临时置顶
+                    w.setWindowFlag(Qt.WindowStaysOnTopHint, True)
+                    w.show()
+                    w.raise_()
+                    w.activateWindow()
+                    setattr(w, "_topmost_scheduled", True)
+
+                    # 3 秒后取消置顶（不再永远置顶）
+                    def _unset_topmost():
+                        try:
+                            w.setWindowFlag(Qt.WindowStaysOnTopHint, False)
+                            w.show()
+                            w.raise_()
+                            w.activateWindow()
+                        except Exception:
+                            pass
+                    QTimer.singleShot(3000, _unset_topmost)
+                except Exception:
+                    pass
+
+            try:
+                splash_win.destroyed.connect(lambda *_: _make_main_topmost())
+            except Exception:
+                # 若 destroyed 未触发，使用定时器兜底（3.2s 后）
+                QTimer.singleShot(3200, _make_main_topmost)
+    except Exception:
+        pass
+    # 保持强引用，避免在某些环境下窗口被提前回收
+    try:
+        setattr(app, "_main_window", w)
+    except Exception:
+        pass
+
+
+
+
     sys.exit(app.exec())
 
 
 if __name__ == "__main__":
+    # show_windows_toast("LZ-Studio", "项目启动中，请稍等 ...")
+
     main()
