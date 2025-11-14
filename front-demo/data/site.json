@@ -1,0 +1,72 @@
+{
+  "site": {
+    "title": "我的博客",
+    "theme": {
+      "primary_color": "#333333",
+      "accent_color": "#4a90e2"
+    }
+  },
+  "pages": [
+    {
+      "id": "home",
+      "title": "主页",
+      "sections": [
+        {
+          "id": "sec1",
+          "type": "header",
+          "text": "欢迎来到我的博客"
+        },
+        {
+          "id": "sec2",
+          "type": "paragraph",
+          "text": "这是一段示例文本。"
+        },
+        {
+          "id": "row1",
+          "type": "row",
+          "columns": [
+            {
+              "id": "col1",
+              "width": 1.0,
+              "items": [
+                {
+                  "id": "m1",
+                  "type": "markdown",
+                  "text": "**左列 Markdown**"
+                },
+                {
+                  "id": "img1",
+                  "type": "image",
+                  "url": "https://picsum.photos/300/200",
+                  "caption": "左列图片"
+                }
+              ]
+            },
+            {
+              "id": "col2",
+              "width": 1.0,
+              "items": [
+                {
+                  "id": "h1",
+                  "type": "header",
+                  "text": "右列标题"
+                },
+                {
+                  "id": "p1",
+                  "type": "paragraph",
+                  "text": "右列段落内容。"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "sec3",
+          "type": "image",
+          "url": "https://picsum.photos/800/300",
+          "caption": "示例图片"
+        }
+      ]
+    }
+  ]
+}
