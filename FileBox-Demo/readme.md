@@ -13,3 +13,7 @@
 - 我希望你用 .venv 的相对路径进行环境的激活,如 下载库使用 .venv\Scripts\pip install  xxxxxx；运行软件使用.venv\Scripts\python main.py 运行软件
 - 希望所有 Pip install 使用阿里云镜像- https://mirrors.aliyun.com/pypi/simple/
 
+---
+
+- 基于 solo 模式完成
+- 具体参数需要参考 config.json 可以 "auto" | "xx.xx.xx.xx" 确定网络

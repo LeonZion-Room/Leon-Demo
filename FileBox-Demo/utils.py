@@ -3,10 +3,12 @@ import re
 import json
 import time
 import uuid
+import socket
 
 STORAGE_DIR = os.path.join(os.path.dirname(__file__), "storage")
 BATCHES_FILE = os.path.join(STORAGE_DIR, "batches.json")
 AUTH_FILE = os.path.join(STORAGE_DIR, "auth_tokens.json")
+CONFIG_FILE = os.path.join(STORAGE_DIR, "config.json")
 
 def ensure_storage():
     if not os.path.exists(STORAGE_DIR):
@@ -94,3 +96,53 @@ def revoke_token(token):
     if token in tokens:
         tokens.pop(token)
         save_auth_tokens(tokens)
+
+def load_config():
+    ensure_storage()
+    default = {
+        "host": "localhost",
+        "ui_port": 8501,
+        "api_port": 8000,
+        "scheme": "http",
+        "auth_required": False,
+        "password": ""
+    }
+    if not os.path.exists(CONFIG_FILE):
+        return default
+    try:
+        with open(CONFIG_FILE, "r", encoding="utf-8") as f:
+            cfg = json.load(f)
+            for k in default:
+                if k not in cfg:
+                    cfg[k] = default[k]
+            return cfg
+    except Exception:
+        return default
+
+def ui_base_url(cfg=None):
+    cfg = cfg or load_config()
+    host_cfg = cfg.get('host','auto')
+    host = host_cfg
+    if host_cfg in ('auto','0.0.0.0','127.0.0.1','localhost'):
+        try:
+            s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            s.connect(("8.8.8.8", 80))
+            host = s.getsockname()[0]
+            s.close()
+        except Exception:
+            host = 'localhost'
+    return f"{cfg.get('scheme','http')}://{host}:{cfg.get('ui_port',8501)}"
+
+def api_base_url(cfg=None):
+    cfg = cfg or load_config()
+    host_cfg = cfg.get('host','auto')
+    host = host_cfg
+    if host_cfg in ('auto','0.0.0.0','127.0.0.1','localhost'):
+        try:
+            s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            s.connect(("8.8.8.8", 80))
+            host = s.getsockname()[0]
+            s.close()
+        except Exception:
+            host = 'localhost'
+    return f"{cfg.get('scheme','http')}://{host}:{cfg.get('api_port',8000)}"

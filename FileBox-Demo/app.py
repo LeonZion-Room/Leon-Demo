@@ -3,15 +3,21 @@ import uuid
 import json
 import streamlit as st
 from urllib.parse import urlencode
-from utils import ensure_storage, load_batches, save_batches, to_safe_filename, unique_filename, STORAGE_DIR, create_token, verify_token, revoke_token
+from utils import ensure_storage, load_batches, save_batches, to_safe_filename, unique_filename, STORAGE_DIR, create_token, verify_token, revoke_token, load_config, ui_base_url, api_base_url
 from streamlit_cookies_manager import EncryptedCookieManager
 
 ensure_storage()
-cookies = EncryptedCookieManager(prefix="filebox", password=os.environ.get("FILEBOX_PASSWORD", "filebox"))
+cfg_boot = load_config()
+cookies = EncryptedCookieManager(prefix="filebox", password=cfg_boot.get("password", "filebox"))
 if not cookies.ready():
     st.stop()
 
 def require_auth():
+    cfg = load_config()
+    if not cfg.get("auth_required", True):
+        if "authed" not in st.session_state:
+            st.session_state["authed"] = True
+        return
     token = cookies.get("token")
     if "authed" not in st.session_state:
         st.session_state["authed"] = False
@@ -22,7 +28,7 @@ def require_auth():
         st.title("文件存储系统")
         pwd = st.text_input("请输入密码", type="password")
         if st.button("登录", use_container_width=True):
-            target = os.environ.get("FILEBOX_PASSWORD", "")
+            target = cfg.get("password", "")
             if pwd and target and pwd == target:
                 t = create_token()
                 cookies["token"] = t
@@ -56,8 +62,9 @@ def upload_page():
             entries.append({"name": f.name, "safe_name": safe, "path": target_path})
         batches[batch_id] = entries
         save_batches(batches)
+        cfg = load_config()
         qp = urlencode({"batch": batch_id})
-        link = f"http://localhost:8501/?{qp}"
+        link = f"{ui_base_url(cfg)}/?{qp}"
         st.success("上传完成")
         st.link_button("查看链接", link, use_container_width=True)
 
@@ -68,12 +75,13 @@ def view_batch_page(batch_id):
         return
     entries = batches[batch_id]
     st.subheader("当前批次文件")
+    cfg = load_config()
     c1, c2 = st.columns(2)
     with c1:
-        all_url = f"http://localhost:8000/download_all/{batch_id}"
+        all_url = f"{api_base_url(cfg)}/download_all/{batch_id}"
         st.link_button("下载全部", all_url, use_container_width=True)
     with c2:
-        home_url = "http://localhost:8501/"
+        home_url = f"{ui_base_url(cfg)}/"
         st.link_button("返回上传", home_url, use_container_width=True)
     with st.form("edit_form"):
         new_names = []
@@ -83,7 +91,7 @@ def view_batch_page(batch_id):
                 nn = st.text_input("文件名称", value=e["name"], key=f"name_{i}")
                 new_names.append(nn)
             with col3:
-                url = f"http://localhost:8000/download/{batch_id}/{e['safe_name']}"
+                url = f"{api_base_url(cfg)}/download/{batch_id}/{e['safe_name']}"
                 st.link_button("下载", url, use_container_width=True)
         submitted = st.form_submit_button("保存更改", use_container_width=True)
         if submitted:

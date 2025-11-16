@@ -1,0 +1,8 @@
+{
+  "host": "auto",
+  "ui_port": 8501,
+  "api_port": 8000,
+  "scheme": "http",
+  "auth_required": true,
+  "password": "wswwsw1234"
+}

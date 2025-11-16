@@ -4,13 +4,22 @@ import time
 import uvicorn
 import subprocess
 import sys
+from utils import load_config
 
 def start_api():
-    uvicorn.run("file_server:app", host="127.0.0.1", port=8000, log_level="info")
+    cfg = load_config()
+    host_cfg = cfg.get("host", "auto")
+    host = "0.0.0.0" if host_cfg == "auto" else host_cfg
+    port = int(cfg.get("api_port", 8000))
+    uvicorn.run("file_server:app", host=host, port=port, log_level="info")
 
 def start_streamlit():
+    cfg = load_config()
     app_path = os.path.join(os.path.dirname(__file__), "app.py")
-    subprocess.call([sys.executable, "-m", "streamlit", "run", app_path])
+    host_cfg = cfg.get("host", "auto")
+    host = "0.0.0.0" if host_cfg == "auto" else host_cfg
+    port = str(cfg.get("ui_port", 8501))
+    subprocess.call([sys.executable, "-m", "streamlit", "run", app_path, "--server.address", host, "--server.port", port])
 
 def main():
     t = threading.Thread(target=start_api, daemon=True)
