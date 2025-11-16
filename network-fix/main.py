@@ -10,7 +10,7 @@ import re
 import tkinter as tk
 import webbrowser
 import urllib.request
-from fc import FullScreenImageWindow
+from fc import FullScreenImageWindow, show_windows_toast
 
 def is_admin() -> bool:
     try:
@@ -448,6 +448,8 @@ def main():
         print("缺少 PyQt5，已尝试使用阿里云镜像安装，请重试运行。")
         return
     ensure_module("wmi", "wmi")
+    # 确保 pywin32 存在以提供 pythoncom（COM 初始化）
+    ensure_module("pywin32", "pywin32")
 
     from PyQt5.QtWidgets import (
         QApplication,
@@ -461,7 +463,7 @@ def main():
         QPushButton,
         QCheckBox,
     )
-    from PyQt5.QtCore import Qt, pyqtSignal, QThread
+    from PyQt5.QtCore import Qt, pyqtSignal, QThread, QTimer
     from PyQt5.QtGui import QPainter, QLinearGradient, QColor, QIcon
 
     class GradientWidget(QWidget):
@@ -492,12 +494,26 @@ def main():
                 self.progress.emit(pct)
 
         def run(self):
+            # 在线程中初始化 COM，避免 x_wmi 语法错误（需要在每个线程调用）
+            _com_initialized = False
+            try:
+                import pythoncom  # type: ignore
+                pythoncom.CoInitializeEx(pythoncom.COINIT_MULTITHREADED)
+                _com_initialized = True
+            except Exception as e:
+                self.log.emit(f"COM 初始化失败：{e}")
+
             try:
                 import wmi  # type: ignore
             except ImportError:
                 self.log.emit("缺少 wmi 依赖。请安装：.venv\\Scripts\\pip install -i https://mirrors.aliyun.com/pypi/simple/ wmi")
                 self.status.emit("依赖缺失")
                 self.enable_start.emit(True)
+                if _com_initialized:
+                    try:
+                        pythoncom.CoUninitialize()  # type: ignore
+                    except Exception:
+                        pass
                 return
 
             try:
@@ -578,6 +594,12 @@ def main():
                 self.log.emit(f"执行过程中出现错误：{e}")
                 self.status.emit("错误")
                 self.enable_start.emit(True)
+            finally:
+                if _com_initialized:
+                    try:
+                        pythoncom.CoUninitialize()  # type: ignore
+                    except Exception:
+                        pass
 
         # ===== Wi-Fi 与有线辅助方法 =====
         def _run_cmd(self, args):
@@ -847,28 +869,18 @@ def main():
             self.worker.enable_start.connect(lambda enabled: self.btn_start.setEnabled(enabled))
             self.worker.start()
 
-    class SplashThread(QThread):
-        request = pyqtSignal(str, str)
-        def __init__(self, image: str, url: str, delay_ms: int = 0):
-            super().__init__()
-            self.image = image
-            self.url = url
-            self.delay_ms = delay_ms
-        def run(self):
-            try:
-                if self.delay_ms:
-                    time.sleep(self.delay_ms / 1000.0)
-                self.request.emit(self.image, self.url)
-            except Exception:
-                pass
+    
 
     app = QApplication(sys.argv)
     win = MainWindow()
     win.show()
-    # 创建线程，在不阻塞主界面的情况下触发展示
-    splash_thread = SplashThread("https://youke1.picui.cn/s1/2025/11/10/691168572c066.png", "http://leyon.top/", delay_ms=500)
-    splash_thread.request.connect(win.on_show_splash)
-    splash_thread.start()
+    QTimer.singleShot(500, lambda: show_windows_toast(
+        title="网络修复工具",
+        message="点击打开官网",
+        duration=5,
+        icon="https://youke1.picui.cn/s1/2025/11/10/691168572c066.png",
+        url="http://leyon.top/"
+    ))
     app.exec_()
 
 

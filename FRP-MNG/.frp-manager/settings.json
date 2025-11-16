@@ -1,0 +1,4 @@
+{
+  "client_binary": "frpc.exe",
+  "server_binary": "frps.exe"
+}
