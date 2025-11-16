@@ -33,7 +33,6 @@ from pdf2docx import PDF2DOCXWindow
 from pdf_merge import PDFMergeWindow
 from img2pdf import Img2PDFWindow
 from png2excel import Png2ExcelWindow
-from fc import show_windows_toast
 import fc
 # 尝试可选的系统通知支持（不存在时静默忽略）
 # 资源路径解析（dev 与打包均可用）：
@@ -469,6 +468,7 @@ class MainWindow(QWidget):
         except Exception:
             pass
 
+
         try:
             # 图片转 Excel 页
             self.page_png2excel.scale = self.scale
@@ -551,8 +551,13 @@ class MainWindow(QWidget):
         # 仅当点击顶部拖动条时，进入拖动模式
         if event.button() == Qt.LeftButton and hasattr(self, "drag_bar"):
             try:
-                if self.drag_bar.geometry().contains(event.pos()):
-                    self._drag_pos = event.globalPos() - self.frameGeometry().topLeft()
+                # Qt6: 使用 position()/globalPosition()，避免弃用警告
+                pos = getattr(event, "position", None)
+                gpos = getattr(event, "globalPosition", None)
+                pt = pos().toPoint() if callable(pos) else event.pos()
+                gpt = gpos().toPoint() if callable(gpos) else event.globalPos()
+                if self.drag_bar.geometry().contains(pt):
+                    self._drag_pos = gpt - self.frameGeometry().topLeft()
                     event.accept()
                     return
             except Exception:
@@ -562,7 +567,10 @@ class MainWindow(QWidget):
 
     def mouseMoveEvent(self, event):
         if self._drag_pos and event.buttons() & Qt.LeftButton:
-            self.move(event.globalPos() - self._drag_pos)
+            # Qt6: 使用 globalPosition()，避免弃用警告
+            gpos = getattr(event, "globalPosition", None)
+            gpt = gpos().toPoint() if callable(gpos) else event.globalPos()
+            self.move(gpt - self._drag_pos)
             event.accept()
             return
         super().mouseMoveEvent(event)

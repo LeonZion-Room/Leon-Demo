@@ -1,0 +1,48 @@
+{
+  "70c04448239343868dad52c7f950948d": [
+    {
+      "name": "app123.py",
+      "safe_name": "app123.py",
+      "path": "C:\\Users\\leonz\\Desktop\\Codings\\Leon-Demo\\FileBox-Demo\\storage\\batch_70c04448239343868dad52c7f950948d\\app123.py"
+    },
+    {
+      "name": "file_server.py",
+      "safe_name": "file_server.py",
+      "path": "C:\\Users\\leonz\\Desktop\\Codings\\Leon-Demo\\FileBox-Demo\\storage\\batch_70c04448239343868dad52c7f950948d\\file_server.py"
+    },
+    {
+      "name": "main.py",
+      "safe_name": "main.py",
+      "path": "C:\\Users\\leonz\\Desktop\\Codings\\Leon-Demo\\FileBox-Demo\\storage\\batch_70c04448239343868dad52c7f950948d\\main.py"
+    }
+  ],
+  "0063361b40934a6f9858af9af608c93d": [
+    {
+      "name": "a.bat",
+      "safe_name": "a.bat",
+      "path": "C:\\Users\\leonz\\Desktop\\Codings\\Leon-Demo\\FileBox-Demo\\storage\\batch_0063361b40934a6f9858af9af608c93d\\a.bat"
+    },
+    {
+      "name": "AnLink.exe",
+      "safe_name": "AnLink.exe",
+      "path": "C:\\Users\\leonz\\Desktop\\Codings\\Leon-Demo\\FileBox-Demo\\storage\\batch_0063361b40934a6f9858af9af608c93d\\AnLink.exe"
+    },
+    {
+      "name": "asd.pdf",
+      "safe_name": "asd.pdf",
+      "path": "C:\\Users\\leonz\\Desktop\\Codings\\Leon-Demo\\FileBox-Demo\\storage\\batch_0063361b40934a6f9858af9af608c93d\\asd.pdf"
+    }
+  ],
+  "0f523552e69b4606836fdffe604df4a5": [
+    {
+      "name": "cbe44d3fd03317079a0c2e50fec300f061dfc6e101909.webp",
+      "safe_name": "cbe44d3fd03317079a0c2e50fec300f061dfc6e101909.webp",
+      "path": "C:\\Users\\leonz\\Desktop\\Codings\\Leon-Demo\\FileBox-Demo\\storage\\batch_0f523552e69b4606836fdffe604df4a5\\cbe44d3fd03317079a0c2e50fec300f061dfc6e101909.webp"
+    },
+    {
+      "name": "新建 PPTX 演示文稿.pptx",
+      "safe_name": "_PPTX_.pptx",
+      "path": "C:\\Users\\leonz\\Desktop\\Codings\\Leon-Demo\\FileBox-Demo\\storage\\batch_0f523552e69b4606836fdffe604df4a5\\_PPTX_.pptx"
+    }
+  ]
+}
