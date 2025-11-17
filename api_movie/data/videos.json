@@ -1,0 +1,32 @@
+[
+  {
+    "id": "b42894dc-b41f-414c-bf5d-b306519087c7",
+    "name": "20251118-011236.mp4",
+    "crf": 23,
+    "original_path": "C:\\Users\\leonz\\Desktop\\Leon-WorkStation\\Leon-Demo\\api_movie\\data\\original\\b42894dc-b41f-414c-bf5d-b306519087c7.mp4",
+    "compressed_path": "C:\\Users\\leonz\\Desktop\\Leon-WorkStation\\Leon-Demo\\api_movie\\data\\compressed\\b42894dc-b41f-414c-bf5d-b306519087c7.mp4",
+    "uploaded_at": "2025-11-17T17:29:45.610487Z",
+    "size_original": 520870,
+    "size_compressed": 131821
+  },
+  {
+    "id": "bab454f3-2c29-4655-ac85-13d3e48a685f",
+    "name": "日常审批",
+    "crf": 23,
+    "original_path": "C:\\Users\\leonz\\Desktop\\Leon-WorkStation\\Leon-Demo\\api_movie\\data\\original\\bab454f3-2c29-4655-ac85-13d3e48a685f.mp4",
+    "compressed_path": "C:\\Users\\leonz\\Desktop\\Leon-WorkStation\\Leon-Demo\\api_movie\\data\\compressed\\bab454f3-2c29-4655-ac85-13d3e48a685f.mp4",
+    "uploaded_at": "2025-11-17T17:31:30.869491Z",
+    "size_original": 11275934,
+    "size_compressed": 5856390
+  },
+  {
+    "id": "a02691e3-c993-4d16-b9b0-961b4254c504",
+    "name": "日常审批",
+    "crf": 23,
+    "original_path": "C:\\Users\\leonz\\Desktop\\Leon-WorkStation\\Leon-Demo\\api_movie\\data\\original\\a02691e3-c993-4d16-b9b0-961b4254c504.mp4",
+    "compressed_path": "C:\\Users\\leonz\\Desktop\\Leon-WorkStation\\Leon-Demo\\api_movie\\data\\compressed\\a02691e3-c993-4d16-b9b0-961b4254c504.mp4",
+    "uploaded_at": "2025-11-17T17:31:48.311594Z",
+    "size_original": 11275934,
+    "size_compressed": 5856390
+  }
+]

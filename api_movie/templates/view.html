@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>{{ title }}</title>
+  <style>
+    :root { --bg:#0f172a; --panel:#111827; --accent:#38bdf8; }
+    body { margin:0; background: var(--bg); color:#e5e7eb; font-family: system-ui, Arial; }
+    header { padding: 20px 24px; background: var(--panel); border-bottom: 1px solid #1f2937; display:flex; align-items:center; justify-content:space-between; }
+    h1 { margin:0; font-size:18px; }
+    main { padding: 24px; display:flex; align-items:center; justify-content:center; }
+    video { width: 90vw; height: 70vh; background:#000; border-radius: 10px; }
+    .btn { padding: 10px 14px; border-radius: 8px; border: 1px solid #1f2937; cursor: pointer; color:#0b1220; font-weight:600; background: var(--accent); }
+    a { color:#93c5fd; text-decoration:none; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>{{ title }}</h1>
+    <a href="/">返回主页</a>
+  </header>
+  <main>
+    <div>
+      <video id="player" controls src="{{ src }}"></video>
+      <div style="margin-top:12px">
+        <button class="btn" onclick="goFull()">全屏播放</button>
+      </div>
+    </div>
+  </main>
+  <script>
+    function goFull() {
+      const v = document.getElementById('player');
+      if (v.requestFullscreen) v.requestFullscreen();
+      else if (v.webkitRequestFullscreen) v.webkitRequestFullscreen();
+      else if (v.msRequestFullscreen) v.msRequestFullscreen();
+      v.play();
+    }
+  </script>
+</body>
+</html>

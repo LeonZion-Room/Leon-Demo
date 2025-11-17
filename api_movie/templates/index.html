@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>视频上传与预览</title>
+  <style>
+    :root { --bg:#0f172a; --panel:#111827; --muted:#94a3b8; --primary:#22c55e; --accent:#38bdf8; }
+    body { font-family: system-ui, Arial; margin: 0; background: var(--bg); color:#e5e7eb; }
+    header { padding: 20px 24px; background: var(--panel); border-bottom: 1px solid #1f2937; }
+    h1 { margin:0; font-size: 20px; }
+    main { padding: 24px; }
+    .row { display: flex; gap: 24px; align-items: stretch; }
+    .card { background: var(--panel); border: 1px solid #1f2937; border-radius: 10px; padding: 16px; }
+    .col { flex: 1; }
+    label { display: block; margin: 10px 0; color: var(--muted); }
+    input[type=text], input[type=file] { width: 100%; padding: 10px; border-radius: 8px; border:1px solid #374151; background:#0b1220; color:#e5e7eb; }
+    input[type=range] { width: 100%; }
+    .btn { padding: 10px 14px; border-radius: 8px; border: 1px solid #1f2937; cursor: pointer; color:#0b1220; font-weight:600; }
+    .btn.primary { background: var(--primary); }
+    .btn.accent { background: var(--accent); }
+    .btn + .btn { margin-left: 10px; }
+    video { width: 100%; max-height: 320px; background: #000; border-radius: 8px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 16px; }
+    th, td { border: 1px solid #1f2937; padding: 10px; }
+    thead { background: #0b1220; }
+    a { color: var(--accent); text-decoration: none; }
+    .metric { display:inline-block; background:#0b1220; border:1px solid #1f2937; padding:6px 8px; border-radius:8px; margin-right:8px; }
+  </style>
+  <script>
+    let tempId = null;
+    let currentCrf = 23;
+    async function doPreview() {
+      const fileInput = document.getElementById('file');
+      const file = fileInput.files[0];
+      if (!file) return;
+      const fd = new FormData();
+      fd.append('file', file);
+      fd.append('crf', String(currentCrf));
+      const res = await fetch('/preview', { method: 'POST', body: fd });
+      const data = await res.json();
+      tempId = data.temp_id;
+      const v = document.getElementById('preview');
+      v.src = data.preview_url;
+      v.load();
+      v.play();
+    }
+    async function doCommit() {
+      if (!tempId) return;
+      const title = document.getElementById('title').value;
+      const fd = new FormData();
+      fd.append('temp_id', tempId);
+      fd.append('crf', String(currentCrf));
+      fd.append('title', title);
+      const res = await fetch('/commit', { method: 'POST', body: fd });
+      await res.json();
+      tempId = null;
+      await loadVideos();
+    }
+    async function directUpload() {
+      const fileInput = document.getElementById('file');
+      const file = fileInput.files[0];
+      if (!file) return;
+      const title = document.getElementById('title').value;
+      const fd = new FormData();
+      fd.append('file', file);
+      fd.append('crf', String(currentCrf));
+      fd.append('title', title);
+      const res = await fetch('/upload', { method: 'POST', body: fd });
+      await res.json();
+      await loadVideos();
+    }
+    async function loadVideos() {
+      const res = await fetch('/videos');
+      const items = await res.json();
+      const tbody = document.getElementById('tbody');
+      tbody.innerHTML = '';
+      for (const i of items) {
+        const tr = document.createElement('tr');
+        const name = document.createElement('td');
+        name.textContent = i.name;
+        const crf = document.createElement('td');
+        crf.textContent = i.crf;
+        const orig = document.createElement('td');
+        const vo = document.createElement('video');
+        vo.controls = true;
+        vo.src = i.original_url;
+        orig.appendChild(vo);
+        const comp = document.createElement('td');
+        const vc = document.createElement('video');
+        vc.controls = true;
+        vc.src = i.compressed_url;
+        comp.appendChild(vc);
+        const sizeO = document.createElement('td');
+        sizeO.textContent = i.size_original_human;
+        const sizeC = document.createElement('td');
+        sizeC.textContent = i.size_compressed_human;
+        const info = document.createElement('td');
+        const m1 = document.createElement('div');
+        m1.className = 'metric';
+        m1.textContent = '原始: ' + i.size_original_human + ' / ' + i.duration_original_human;
+        const m2 = document.createElement('div');
+        m2.className = 'metric';
+        m2.textContent = '压缩: ' + i.size_compressed_human + ' / ' + i.duration_compressed_human;
+        info.appendChild(m1);
+        info.appendChild(m2);
+        const actions = document.createElement('td');
+        const nameInput = document.createElement('input');
+        nameInput.type = 'text';
+        nameInput.value = i.name;
+        nameInput.id = 'name-' + i.id;
+        nameInput.style.width = '200px';
+        const btnRename = document.createElement('button');
+        btnRename.className = 'btn accent';
+        btnRename.textContent = '改名';
+        btnRename.onclick = async () => {
+          const newName = document.getElementById('name-' + i.id).value;
+          const fd = new FormData();
+          fd.append('name', newName);
+          await fetch('/videos/' + i.id + '/rename', { method: 'POST', body: fd });
+          await loadVideos();
+        };
+        const btnDelete = document.createElement('button');
+        btnDelete.className = 'btn';
+        btnDelete.style.marginLeft = '8px';
+        btnDelete.textContent = '删除';
+        btnDelete.onclick = async () => {
+          if (!confirm('确定删除该视频？')) return;
+          await fetch('/videos/' + i.id, { method: 'DELETE' });
+          await loadVideos();
+        };
+        const a3 = document.createElement('a');
+        a3.href = i.view_original_url;
+        a3.textContent = '原始全屏';
+        a3.style.marginLeft = '12px';
+        a3.target = '_blank';
+        const a4 = document.createElement('a');
+        a4.href = i.view_compressed_url;
+        a4.textContent = '压缩全屏';
+        a4.style.marginLeft = '12px';
+        a4.target = '_blank';
+        actions.appendChild(nameInput);
+        actions.appendChild(btnRename);
+        actions.appendChild(btnDelete);
+        actions.appendChild(a3);
+        actions.appendChild(a4);
+        tr.appendChild(name);
+        tr.appendChild(crf);
+        tr.appendChild(orig);
+        tr.appendChild(comp);
+        tr.appendChild(sizeO);
+        tr.appendChild(sizeC);
+        tr.appendChild(info);
+        tr.appendChild(actions);
+        tbody.appendChild(tr);
+      }
+    }
+    window.addEventListener('DOMContentLoaded', () => {
+      const slider = document.getElementById('crf');
+      const label = document.getElementById('crfLabel');
+      slider.addEventListener('input', () => {
+        currentCrf = Number(slider.value);
+        label.textContent = currentCrf;
+      });
+      currentCrf = Number(slider.value);
+      label.textContent = currentCrf;
+      loadVideos();
+    });
+  </script>
+  </head>
+<body>
+  <header><h1>视频上传与预览</h1></header>
+  <main>
+    <div class="row">
+      <div class="col card">
+        <label>标题
+          <input id="title" type="text" placeholder="可选标题" />
+        </label>
+        <label>选择文件
+          <input id="file" type="file" accept="video/*" />
+        </label>
+        <label>压缩指数(CRF 18-32)
+          <input id="crf" type="range" min="18" max="32" value="23" />
+          <span id="crfLabel">23</span>
+        </label>
+        <div>
+          <button class="btn primary" onclick="doPreview()">生成预览(约5秒)</button>
+          <button class="btn accent" onclick="doCommit()">提交上传</button>
+          <button class="btn" onclick="directUpload()">直接上传并压缩</button>
+        </div>
+      </div>
+      <div class="col card">
+        <video id="preview" controls></video>
+      </div>
+    </div>
+    <h2 style="margin-top:24px">视频列表</h2>
+    <table>
+      <thead>
+        <tr><th>名称</th><th>CRF</th><th>原始</th><th>压缩</th><th>原始大小</th><th>压缩大小</th><th>信息</th><th>操作</th></tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </main>
+</body>
+</html>
