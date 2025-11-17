@@ -16,15 +16,14 @@ st.set_page_config(
 
 
 # ---------------------- 创建 Tab 容器 ----------------------
-tab1, tab2, tab3, tab4, tab5, tab6, tab7,tab8 = st.tabs(["📊 介绍", "🔧 OA-2025", "🖼️ OA-2025-说明书","OA-2025-工作日志","OA-2019","SCTZ-云盘","Leyon-云盘","Error-Cards"])
+tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(["📊 介绍", "🔧 OA-2025", "🖼️ OA-2025-说明书","OA-2025-开发日志","OA-2019","其它"])
 
 # ---------------------- 填充 Tab 内容 ----------------------
 with tab1:fc_container_1()
 with tab2:fc_container_2()
 with tab3:fc_container_3()
 with tab4:fc_container_4()
-with tab5:fc_container_6()
+with tab5:fc_container_5()
 with tab6:fc_container_6()
-with tab7:fc_container_7()
-with tab8:fc_container_8()
+
 

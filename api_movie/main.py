@@ -90,7 +90,7 @@ def save_upload_to(path: str, file: UploadFile):
 def compress_video(in_path: str, out_path: str, crf: int):
     run_ffmpeg(["-y", "-i", in_path, "-c:v", "libx264", "-preset", "veryfast", "-crf", str(crf), "-c:a", "aac", "-movflags", "+faststart", out_path])
 
-def create_preview(in_path: str, out_path: str, crf: int, duration: int = 5):
+def create_preview(in_path: str, out_path: str, crf: int, duration: int = 15):
     run_ffmpeg(["-y", "-i", in_path, "-t", str(duration), "-c:v", "libx264", "-preset", "veryfast", "-crf", str(crf), "-c:a", "aac", "-movflags", "+faststart", out_path])
 
 def build_item(id_: str, name: str, crf: int, orig_path: str, comp_path: str, dur_orig: float, dur_comp: float):
@@ -266,6 +266,41 @@ async def stream_compressed(id: str, request: Request):
     path = item["compressed_path"]
     range_h = request.headers.get("range")
     return streamer(path, range_h)
+
+@app.post("/videos/{id}/rename")
+async def rename_video(id: str, name: str = Form(...)):
+    items = read_db()
+    found = False
+    for i in items:
+        if i["id"] == id:
+            i["name"] = name
+            found = True
+            break
+    if not found:
+        raise HTTPException(status_code=404)
+    write_db(items)
+    return {"ok": True}
+
+@app.delete("/videos/{id}")
+async def delete_video(id: str):
+    items = read_db()
+    idx = None
+    for k, i in enumerate(items):
+        if i["id"] == id:
+            idx = k
+            break
+    if idx is None:
+        raise HTTPException(status_code=404)
+    item = items[idx]
+    for p in [item.get("original_path"), item.get("compressed_path")]:
+        if p and os.path.exists(p):
+            try:
+                os.remove(p)
+            except Exception:
+                pass
+    del items[idx]
+    write_db(items)
+    return {"ok": True}
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)

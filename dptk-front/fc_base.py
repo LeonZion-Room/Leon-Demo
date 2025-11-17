@@ -15,8 +15,10 @@ def fc_card(title, text, image, url, img_width=200, img_height=120):
     st.markdown(
         f"""
         <div class="fc-card">
-          <img class="fc-card-img" src="{image}" alt="card" style="width:{img_width}px;height:{img_height}px;"/>
-          <div class="fc-card-content">
+          <div class="fc-card-img-wrap" style="width:{img_width}px;height:{img_height}px;">
+            <img class="fc-card-img" src="{image}" alt="card"/>
+          </div>
+          <div class="fc-card-content" style="min-height:{img_height}px;">
             <div class="fc-card-title">{title}</div>
             <div class="fc-card-text">{text}</div>
             <a class="fc-card-link" href="{url}" target="_blank">点击进入</a>
@@ -25,30 +27,38 @@ def fc_card(title, text, image, url, img_width=200, img_height=120):
         <style>
           .fc-card{{
             display:flex;
-            align-items:center;
-            gap:16px;
+            align-items:flex-start;
+            gap:10px;
             width:100%;
-            padding:16px;
+            padding:12px;
             border-radius:12px;
-            background:transparent;
-            box-shadow:none;
+            background:#ffffff;
+            border:1px solid #e5e7eb;
+            box-shadow:0 1px 2px rgba(0,0,0,0.03);
+          }}
+          .fc-card-img-wrap{{
+            border-radius:20px;
+            overflow:hidden;
+            flex-shrink:0;
           }}
           .fc-card-img{{
+            width:100%;
+            height:100%;
             object-fit:cover;
             object-position:center;
-            border-radius:8px;
-            flex-shrink:0;
             display:block;
           }}
           .fc-card-content{{
             display:flex;
             flex-direction:column;
-            gap:8px;
+            gap:6px;
             flex:1;
             min-width:0;
           }}
           .fc-card-title{{
-            font-size:20px;
+            font-size:18px;
+            line-height:1.3;
+            height:1.3em;
             font-weight:600;
             color:#111827;
             overflow:hidden;
@@ -57,6 +67,8 @@ def fc_card(title, text, image, url, img_width=200, img_height=120):
           }}
           .fc-card-text{{
             font-size:14px;
+            line-height:1.4;
+            height:calc(1.4em * 2);
             color:#4b5563;
             overflow:hidden;
             display:-webkit-box;
@@ -244,6 +256,43 @@ def fc_carousel(slides, height=360, sec_per_slide=3, max_width=None, aspect_rati
     )
 
 
+def fc_hls_player(src, height=420, poster=None, autoplay=True, muted=True, controls=True):
+    import uuid
+    vid = "fc_hls_" + uuid.uuid4().hex
+    poster_attr = f"poster='{poster}'" if poster else ""
+    autoplay_attr = "autoplay" if autoplay else ""
+    muted_attr = "muted" if muted else ""
+    controls_attr = "controls" if controls else ""
+    html(
+        f"""
+        <div id='{vid}_wrap' style='width:100%;height:{height}px;background:#000;border-radius:12px;overflow:hidden;'>
+          <video id='{vid}' {poster_attr} {autoplay_attr} {muted_attr} {controls_attr} playsinline style='width:100%;height:100%;object-fit:contain;background:#000;'></video>
+        </div>
+        <script src='https://cdn.jsdelivr.net/npm/hls.js@latest'></script>
+        <script>
+          (function(){{
+            var video = document.getElementById('{vid}');
+            var src = '{src}';
+            function play(){{ try{{ video.play(); }}catch(e){{}} }}
+            if (window.Hls && window.Hls.isSupported()) {{
+              var hls = new Hls({{ lowLatencyMode: true }});
+              hls.loadSource(src);
+              hls.attachMedia(video);
+              hls.on(Hls.Events.MANIFEST_PARSED, function(){{ play(); }});
+              hls.on(Hls.Events.ERROR, function(event, data){{ console.warn('HLS error', data); }});
+            }} else if (video.canPlayType('application/vnd.apple.mpegurl')) {{
+              video.src = src;
+              video.addEventListener('loadedmetadata', play);
+            }} else {{
+              console.warn('HLS not supported in this browser');
+            }}
+          }})();
+        </script>
+        """,
+        height=height + 20,
+    )
+
+
 
 # ---------------------- 基础函数 ----------------------
 def fc_foot():
@@ -257,11 +306,10 @@ def fc_foot():
         st.markdown(
             """
             <div class="fc-links"><span>其它链接:</span>
-            <a href="https://dptk.site" target="_blank">asd</a>&nbsp; &nbsp; &nbsp; &nbsp;
-            <a href="https://dptk.site" target="_blank">https://dptk.site</a>&nbsp; &nbsp;  &nbsp; &nbsp;
-            <a href="https://dptk.site" target="_blank">https://dptk.site</a>&nbsp; &nbsp; &nbsp; &nbsp;
-            <a href="https://dptk.site" target="_blank">https://dptk.site</a>&nbsp; &nbsp; &nbsp; &nbsp;
-            <a href="https://dptk.site" target="_blank">https://dptk.site</a>
+            <a href="http://119.145.17.34:8501/" target="_blank">SCTZB-NAS</a>&nbsp; &nbsp; &nbsp; &nbsp;
+            <a href="http://172.168.13.42:18090/" target="_blank">Leyon-Server</a>&nbsp; &nbsp;  &nbsp; &nbsp;
+            <a href="https://www.yuque.com/leonzion/ogdboo" target="_blank">常见异常-工具集合</a>&nbsp; &nbsp; &nbsp; &nbsp;
+            <a href="https://www.yuque.com/leonzion/ogdboo/gipgzea09ie91ydm?singleDoc#%20%E3%80%8A%E6%8A%95%E6%8E%A7%E6%89%93%E5%8D%B0%E6%9C%BA-%E8%BF%9E%E6%8E%A5%E3%80%8B" target="_blank">投控打印机配置与连接</a>&nbsp; &nbsp; &nbsp; &nbsp;
             </div>
             <style>
             .fc-links a{color:#111827;text-decoration:none;font-weight:600;}
@@ -273,8 +321,8 @@ def fc_foot():
         )
         st.markdown(
             """
-            <div class="fc-links"><span>更新日志:</span>
-            <a href="https://dptk.site" target="_blank">https://dptk.site</a>
+            <div class="fc-links"><span>开发日志:</span>
+            <a href="http://dptk.site" target="_blank">http://dptk.site</a>
             </div>
             """,
             unsafe_allow_html=True,
@@ -282,7 +330,7 @@ def fc_foot():
         st.markdown(
             """
             <div class="fc-links"><span>回到首页:</span>
-            <a href="https://dptk.site" target="_blank">https://dptk.site</a>
+            <a href="http://dptk.site" target="_blank">http://dptk.site</a>
             </div>
             """,
             unsafe_allow_html=True,

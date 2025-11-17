@@ -12,7 +12,7 @@ def fc_container_1():
 - 本网站用于记录投控公司相关网络与信息服务的登入端口
 - 为便于查询与避免重复输入网页链接，已将链接与标签基于网页卡片形式进行展示
 - 相关敏感信息已去除,用户密码等信息请参考通知
-- 主要包含：0A-2025-入口 | OA-2025-入口链接书 | OA-2019-入口 | SCTZ-NAS | Leyon-NAS | Error-Cards
+- 主要包含：0A-2025-入口 | OA-2025-入口链接 | OA-2019-入口 | SCTZ-NAS | Leyon-NAS | Error-Cards
 """,language="markdown")
     # ---------------------- 页脚 ----------------------
     fc_foot()
@@ -67,8 +67,8 @@ def fc_container_3():
     - 此部分内容用于陈列各功能模块的使用入口链接
     - 由于 PDF 展示视频相对不方便，因此通过 在线版说明书 实现演示视频的展示
     - 同时提供pdf下载与必要的演示视频用于介绍与入口链接
-    - 点击卡片可跳转至对应页面进行入口链接书的内容查看
-    - 通过附件区可直接下载对应的入口链接书pdf文件
+    - 点击卡片可跳转至对应页面进行入口链接的内容查看
+    - 通过附件区可直接下载对应的入口链接 .pdf 文件
     """)
     st.divider()
     # ---------------------- 内容 ----------------------
@@ -108,30 +108,105 @@ def fc_container_3():
 
 
     with cols[1]:
-        st.warning("##### 入口链接书-pdf-下载")
+        st.warning("##### 说明书-pdf-下载")
         table_data = [
-            {"文件名称": "0A-2025-入口", "下载链接": "新版预上线OA | 公司内网环境 | 访问速度更快"},
-            {"文件名称": "0A-2025-入口", "下载链接": "新版预上线OA | 公司内网环境 | 访问速度更快"},
-            {"文件名称": "0A-2025-入口", "下载链接": "新版预上线OA | 公司内网环境 | 访问速度更快"},
-            {"文件名称": "0A-2025-入口", "下载链接": "新版预上线OA | 公司内网环境 | 访问速度更快"},
+            {"文件名称": "0A-2025-首页", "下载链接": ""},
+            {"文件名称": "0A-2025-日常审批", "下载链接": "新版预上线OA | 公司内网环境 | 访问速度更快"},
+            {"文件名称": "0A-2025-督办模块", "下载链接": "新版预上线OA | 公司内网环境 | 访问速度更快"},
+            {"文件名称": "0A-2025-法务模块", "下载链接": "新版预上线OA | 公司内网环境 | 访问速度更快"},
+            {"文件名称": "0A-2025-招采模块", "下载链接": "新版预上线OA | 公司内网环境 | 访问速度更快"},
+            {"文件名称": "0A-2025-预算模块", "下载链接": "新版预上线OA | 公司内网环境 | 访问速度更快"},
+            {"文件名称": "0A-2025-费用模块", "下载链接": "新版预上线OA | 公司内网环境 | 访问速度更快"},
         ]
         st.table(table_data)
 
     with cols[2]:
-        st.success("##### 入口链接-视频演示")
-        tabs = st.tabs(["日常审批", "督办模块", "费用模块", "招采模块", "预算模块", "法务模块"])
+        st.success("##### 说明书-视频演示")
+        tabs = st.tabs(["日常审批", "督办模块", "法务模块", "招采模块", "预算模块", "费用模块"]) 
         with tabs[0]:
-            st.video("https://s20.fnnas.net/s/download/c147d2cbf0aa486aba?token=b024b49362fd495ac796bac1c5fbc090")
+            _u = "http://119.145.17.34:8001/stream/compressed/23fda320-bfeb-44f1-9cb1-bc54294f1eae"
+            if _u.endswith(".m3u8") or "m3u8" in _u:
+                fc_hls_player(_u, height=360, muted=True, autoplay=True, controls=True)
+            else:
+                st.video(_u)
+
+            if st.button("大屏播放", key="vid0",use_container_width=True):
+                    st.session_state["video_modal_open"] = True
+                    st.session_state["video_modal_url"] = _u
+                    st.session_state["video_modal_title"] = "日常审批"
         with tabs[1]:
-            st.video("https://ts2.tc.mm.bing.net/th/id/OIP-C.222222222222222222222222?rs=1&pid=ImgDetMain&o=7&rm=3")
+            _u = "http://119.145.17.34:8001/stream/compressed/57059362-22d8-45d1-a558-d851c484e830"
+            if _u.endswith(".m3u8") or "m3u8" in _u:
+                fc_hls_player(_u, height=360, muted=True, autoplay=True, controls=True)
+            else:
+                st.video(_u)
+
+            if st.button("大屏播放", key="vid1",use_container_width=True):
+                    st.session_state["video_modal_open"] = True
+                    st.session_state["video_modal_url"] = _u
+                    st.session_state["video_modal_title"] = "督办模块"
         with tabs[2]:
-            st.video("https://ts2.tc.mm.bing.net/th/id/OIP-C.444444444444444444444444?rs=1&pid=ImgDetMain&o=7&rm=3")
+            _u = "http://119.145.17.34:8001/stream/compressed/d6f9b116-e13e-461d-a517-de9a7284cdbf"
+            if _u.endswith(".m3u8") or "m3u8" in _u:
+                fc_hls_player(_u, height=360, muted=True, autoplay=True, controls=True)
+            else:
+                st.video(_u)
+            _c = st.columns([1,1,1])
+            with _c[1]:
+                if st.button("大屏播放", key="vid5",use_container_width=True):
+                    st.session_state["video_modal_open"] = True
+                    st.session_state["video_modal_url"] = _u
+                    st.session_state["video_modal_title"] = "法务模块"
         with tabs[3]:
-            st.video("https://ts2.tc.mm.bing.net/th/id/OIP-C.555555555555555555555555?rs=1&pid=ImgDetMain&o=7&rm=3")
+            _u = "http://119.145.17.34:8001/stream/compressed/feb01396-7197-426f-902a-d9f86d18db90"
+            if _u.endswith(".m3u8") or "m3u8" in _u:
+                fc_hls_player(_u, height=360, muted=True, autoplay=True, controls=True)
+            else:
+                st.video(_u)
+
+            if st.button("大屏播放", key="vid3",use_container_width=True):
+                    st.session_state["video_modal_open"] = True
+                    st.session_state["video_modal_url"] = _u
+                    st.session_state["video_modal_title"] = "招采模块"
         with tabs[4]:
-            st.video("https://ts2.tc.mm.bing.net/th/id/OIP-C.666666666666666666666666?rs=1&pid=ImgDetMain&o=7&rm=3")
+            _u = "http://119.145.17.34:8001/stream/compressed/a1df344d-06ff-4a43-bba5-819c4d1d6735"
+            if _u.endswith(".m3u8") or "m3u8" in _u:
+                fc_hls_player(_u, height=360, muted=True, autoplay=True, controls=True)
+            else:
+                st.video(_u)
+
+            if st.button("大屏播放", key="vid4",use_container_width=True):
+                    st.session_state["video_modal_open"] = True
+                    st.session_state["video_modal_url"] = _u
+                    st.session_state["video_modal_title"] = "预算模块"
         with tabs[5]:
-            st.video("https://ts2.tc.mm.bing.net/th/id/OIP-C.777777777777777777777777?rs=1&pid=ImgDetMain&o=7&rm=3")
+            _u = "https://ts2.tc.mm.bing.net/th/id/OIP-C.444444444444444444444444?rs=1&pid=ImgDetMain&o=7&rm=3"
+            if _u.endswith(".m3u8") or "m3u8" in _u:
+                fc_hls_player(_u, height=360, muted=True, autoplay=True, controls=True)
+            else:
+                st.error("费用模块开发中，与财管中心对接调整中 ...")
+
+            if st.button("大屏播放", key="vid2",use_container_width=True):
+                    st.session_state["video_modal_open"] = True
+                    st.session_state["video_modal_url"] = _u
+                    st.session_state["video_modal_title"] = "费用模块"
+
+
+        if "video_modal_open" not in st.session_state:
+            st.session_state["video_modal_open"] = False
+        @st.dialog("视频全屏播放", width="large")
+        def _video_modal():
+            url = st.session_state.get("video_modal_url", "")
+            title = st.session_state.get("video_modal_title", "")
+            if title:
+                st.subheader(title)
+            if url:
+                if url.endswith(".m3u8") or "m3u8" in url:
+                    fc_hls_player(url, height=600, muted=False, autoplay=True, controls=True)
+                else:
+                    st.video(url)
+        if st.session_state["video_modal_open"]:
+            _video_modal()
 
     # ---------------------- 页脚 ----------------------
     fc_foot()
@@ -214,7 +289,6 @@ def fc_container_4():
         if st.session_state['log_viewer_open']:
             _log_modal()
 
-    
     fc_foot()
 
 def fc_container_5():
@@ -241,39 +315,23 @@ def fc_container_5():
 
 def fc_container_6():
     # ---------------------- 标题 ----------------------
-    st.title("SCTZ-云盘")
+    st.title("其它")
     st.divider()
 
     # ---------------------- 内容 ----------------------
-    st.write("""
-    这是一个基于 Streamlit 的前端应用，用于展示和交互数据。
-    """)
+    cols = st.columns(3)
+    with cols[0]:
+        fc_card(title="SCTZ-云盘",text="用于SCTZB 相关文件，包括合同、项目文档、客户信息的私有化云盘。",image="http://119.145.17.34:40061/i/2025/11/18/41dk2f.png",url="http://119.145.17.34:8501/")
+        st.markdown(" ")
+        fc_card(title="投控-打印机-配置相关材料",text="关于 投控-13楼、14楼打印机，搬迁后的连接。",image="https://globalimg.sucai999.com/preimg/DBC456/700/DBC456/154/15835bd95c4872416a39a18c3a762cd.jpg",url="https://www.yuque.com/leonzion/ogdboo/gipgzea09ie91ydm?singleDoc# 《投控打印机-连接》")
 
-    # ---------------------- 页脚 ----------------------
-    fc_foot()
-
-def fc_container_7():
-    # ---------------------- 标题 ----------------------
-    st.title("Leyon-云盘")
-    st.divider()
-
-    # ---------------------- 内容 ----------------------
-    st.write("""
-    这是一个基于 Streamlit 的前端应用，用于展示和交互数据。
-    """)
-
-    # ---------------------- 页脚 ----------------------
-    fc_foot()
-
-def fc_container_8():
-    # ---------------------- 标题 ----------------------
-    st.title("Error-Cards")
-    st.divider()
-
-    # ---------------------- 内容 ----------------------
-    st.write("""
-    这是一个基于 Streamlit 的前端应用，用于展示和交互数据。
-    """)
-
+    with cols[1]:
+        fc_card(title="Leyon-服务",text="存储项目文件与必要自建服务-私有化服务；仅允许内网访问。",image="http://119.145.17.34:40061/i/2025/11/18/3zk6jq.png",url="http://172.168.13.42:18090/")
+        st.markdown(" ")
+        fc_card(title="致远OA-开发手册",text="致远OA-开发手册-A8-N-协同管理软件。",image="https://ts1.tc.mm.bing.net/th/id/R-C.33cadd56bc7c6738d72e8bf6bc960ec3?rik=%2bB9Wv9ulg9J3Eg&riu=http%3a%2f%2fwww.zjseeyon.com%2fuploads%2fallimg%2f190621%2f2-1Z6212123210-L.jpg&ehk=CjbijTdgoUjdRMrdYdkiG7Dfk72mcZbef6wDjfErPEU%3d&risl=&pid=ImgRaw&r=0",url="https://share.fnnas.net/s/d0cffc2ecf524b9b92")
+    with cols[2]:
+        fc_card(title="Error-Cards",text="用于解决公司常见电脑或显示屏投屏问题。",image="http://119.145.17.34:40061/i/2025/11/18/4356pi.jpg",url="https://www.yuque.com/leonzion/ogdboo")
+        st.markdown(" ")
+        fc_card(title=" ... ",text="None",image="http://119.145.17.34:40061/i/2025/11/18/55redd.png",url="https://www.baidu.com/")
     # ---------------------- 页脚 ----------------------
     fc_foot()
