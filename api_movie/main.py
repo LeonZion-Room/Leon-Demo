@@ -5,8 +5,8 @@ import shutil
 from datetime import datetime
 from typing import Optional, Tuple
 
-from fastapi import FastAPI, UploadFile, File, Form, Request, HTTPException
-from fastapi.responses import StreamingResponse, JSONResponse, HTMLResponse
+from fastapi import FastAPI, UploadFile, File, Form, Request, HTTPException, Header
+from fastapi.responses import StreamingResponse, JSONResponse, HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.templating import Jinja2Templates
 import subprocess
@@ -20,6 +20,9 @@ COMP_DIR = os.path.join(DATA_DIR, "compressed")
 TMP_DIR = os.path.join(DATA_DIR, "tmp")
 PREVIEW_DIR = os.path.join(DATA_DIR, "tmp_preview")
 DB_PATH = os.path.join(DATA_DIR, "videos.json")
+
+# 密码配置
+CORRECT_PASSWORD = "wswwsw1234"
 
 os.makedirs(ORIG_DIR, exist_ok=True)
 os.makedirs(COMP_DIR, exist_ok=True)
@@ -146,12 +149,17 @@ def streamer(path: str, range_header: Optional[str]):
     }
     return StreamingResponse(gen(), media_type="video/mp4", status_code=status_code, headers=headers)
 
+# 主页路由
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
 
+# preview路由 - 需要密码验证
 @app.post("/preview")
-async def preview(file: UploadFile = File(...), crf: int = Form(...)):
+async def preview(request: Request, authorization: str = Header(None), file: UploadFile = File(...), crf: int = Form(...)):
+    # 验证密码
+    if not authorization or authorization != f"Bearer {CORRECT_PASSWORD}":
+        raise HTTPException(status_code=401, detail="未授权访问，请提供正确的密码")
     temp_id = str(uuid.uuid4())
     ext = os.path.splitext(file.filename)[1].lower() or ".mp4"
     tmp_path = os.path.join(TMP_DIR, temp_id + ext)
@@ -161,13 +169,17 @@ async def preview(file: UploadFile = File(...), crf: int = Form(...)):
     return {"temp_id": temp_id, "preview_url": f"/preview/{temp_id}", "name": file.filename, "crf": crf}
 
 @app.get("/preview/{temp_id}")
-async def get_preview(temp_id: str, request: Request):
+async def get_preview(request: Request, temp_id: str):
     path = os.path.join(PREVIEW_DIR, temp_id + ".mp4")
     range_h = request.headers.get("range")
     return streamer(path, range_h)
 
+# commit路由 - 需要密码验证
 @app.post("/commit")
-async def commit(temp_id: str = Form(...), crf: int = Form(...), title: Optional[str] = Form(None)):
+async def commit(request: Request, authorization: str = Header(None), temp_id: str = Form(...), crf: int = Form(...), title: Optional[str] = Form(None)):
+    # 验证密码
+    if not authorization or authorization != f"Bearer {CORRECT_PASSWORD}":
+        raise HTTPException(status_code=401, detail="未授权访问，请提供正确的密码")
     tmp_candidates = [p for p in os.listdir(TMP_DIR) if p.startswith(temp_id)]
     if not tmp_candidates:
         raise HTTPException(status_code=404, detail="temp not found")
@@ -189,8 +201,12 @@ async def commit(temp_id: str = Form(...), crf: int = Form(...), title: Optional
     write_db(items)
     return {"id": new_id}
 
+# upload路由 - 需要密码验证
 @app.post("/upload")
-async def upload(file: UploadFile = File(...), crf: int = Form(...), title: Optional[str] = Form(None)):
+async def upload(request: Request, authorization: str = Header(None), file: UploadFile = File(...), crf: int = Form(...), title: Optional[str] = Form(None)):
+    # 验证密码
+    if not authorization or authorization != f"Bearer {CORRECT_PASSWORD}":
+        raise HTTPException(status_code=401, detail="未授权访问，请提供正确的密码")
     new_id = str(uuid.uuid4())
     ext = os.path.splitext(file.filename)[1].lower() or ".mp4"
     orig_path = os.path.join(ORIG_DIR, new_id + ext)
@@ -204,8 +220,9 @@ async def upload(file: UploadFile = File(...), crf: int = Form(...), title: Opti
     write_db(items)
     return {"id": new_id}
 
+# videos路由 - 获取所有视频列表
 @app.get("/videos")
-async def videos():
+async def videos(request: Request):
     items = read_db()
     def to_wire(x):
         return {
@@ -235,8 +252,9 @@ def find_item(id_: str):
             return i
     return None
 
+# stream_original路由 - 流媒体播放原始视频
 @app.get("/stream/original/{id}")
-async def stream_original(id: str, request: Request):
+async def stream_original(request: Request, id: str):
     item = find_item(id)
     if not item:
         raise HTTPException(status_code=404)
@@ -244,22 +262,25 @@ async def stream_original(id: str, request: Request):
     range_h = request.headers.get("range")
     return streamer(path, range_h)
 
+# view_original路由 - 全屏播放原始视频
 @app.get("/view/original/{id}", response_class=HTMLResponse)
-async def view_original(id: str, request: Request):
+async def view_original(request: Request, id: str):
     item = find_item(id)
     if not item:
         raise HTTPException(status_code=404)
     return templates.TemplateResponse("view.html", {"request": request, "src": f"/stream/original/{id}", "title": item["name"] + " 原始"})
 
+# view_compressed路由 - 全屏播放压缩视频
 @app.get("/view/compressed/{id}", response_class=HTMLResponse)
-async def view_compressed(id: str, request: Request):
+async def view_compressed(request: Request, id: str):
     item = find_item(id)
     if not item:
         raise HTTPException(status_code=404)
     return templates.TemplateResponse("view.html", {"request": request, "src": f"/stream/compressed/{id}", "title": item["name"] + " 压缩"})
 
+# stream_compressed路由 - 流媒体播放压缩视频
 @app.get("/stream/compressed/{id}")
-async def stream_compressed(id: str, request: Request):
+async def stream_compressed(request: Request, id: str):
     item = find_item(id)
     if not item:
         raise HTTPException(status_code=404)
@@ -267,40 +288,29 @@ async def stream_compressed(id: str, request: Request):
     range_h = request.headers.get("range")
     return streamer(path, range_h)
 
-@app.post("/videos/{id}/rename")
-async def rename_video(id: str, name: str = Form(...)):
-    items = read_db()
-    found = False
-    for i in items:
-        if i["id"] == id:
-            i["name"] = name
-            found = True
-            break
-    if not found:
-        raise HTTPException(status_code=404)
-    write_db(items)
-    return {"ok": True}
-
+# delete路由 - 删除视频（需要密码验证）
 @app.delete("/videos/{id}")
-async def delete_video(id: str):
+async def delete_video(request: Request, id: str, authorization: str = Header(None)):
+    # 验证密码
+    if not authorization or authorization != f"Bearer {CORRECT_PASSWORD}":
+        raise HTTPException(status_code=401, detail="未授权访问，请提供正确的密码")
+    
+    item = find_item(id)
+    if not item:
+        raise HTTPException(status_code=404, detail="视频未找到")
+    
+    # 从数据库中删除记录
     items = read_db()
-    idx = None
-    for k, i in enumerate(items):
-        if i["id"] == id:
-            idx = k
-            break
-    if idx is None:
-        raise HTTPException(status_code=404)
-    item = items[idx]
-    for p in [item.get("original_path"), item.get("compressed_path")]:
-        if p and os.path.exists(p):
-            try:
-                os.remove(p)
-            except Exception:
-                pass
-    del items[idx]
+    items = [i for i in items if i["id"] != id]
     write_db(items)
-    return {"ok": True}
+    
+    # 删除文件系统中的文件
+    if os.path.exists(item["original_path"]):
+        os.remove(item["original_path"])
+    if os.path.exists(item["compressed_path"]):
+        os.remove(item["compressed_path"])
+    
+    return {"message": "视频删除成功"}
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="0.0.0.0", port=8001)
