@@ -28,6 +28,7 @@ from PySide6.QtWidgets import (
     QProgressBar,
     QSizePolicy,
     QBoxLayout,
+    QAbstractItemView,
 )
 from PySide6.QtCore import Qt, QSize, Signal, QThread, QTimer, QUrl
 from PySide6.QtGui import QPixmap, QImage, QIcon, QDesktopServices
@@ -91,23 +92,34 @@ def compose_pdf_from_segments(
     avail_w = max(0.0, pw - margin_pt * 2)
     avail_h = max(0.0, ph - margin_pt * 2)
 
-    for seg in segments:
+    # 目标内容区域按纸张比例（宽:高）自动匹配
+    page_ratio = pw / float(ph) if ph > 0 else 1.0
+    target_h = avail_h
+    target_w = target_h * page_ratio
+    if target_w > avail_w:
+        target_w = avail_w
+        target_h = target_w / page_ratio
+
+    for i, seg in enumerate(segments, 1):
         if seg.mode not in ("RGB", "L"):
             seg = seg.convert("RGB")
-        sw, sh = seg.size
-        if sw <= 0 or sh <= 0:
+        seg_w, seg_h = seg.size
+        if seg_w <= 0 or seg_h <= 0:
             continue
-        # 按宽/高的缩放因子，选择最小以自适应页面
-        scale_w = avail_w / float(sw)
-        scale_h = avail_h / float(sh)
+
+        # 缩放以适配目标内容区域（不拉伸变形）
+        scale_w = target_w / float(seg_w)
+        scale_h = target_h / float(seg_h)
         scale = min(scale_w, scale_h) if (scale_w > 0 and scale_h > 0) else 1.0
-        draw_w = sw * scale
-        draw_h = sh * scale
-        # 居中放置
+        draw_w = seg_w * scale
+        draw_h = seg_h * scale
+
+        # 横向居中，纵向贴近上边距
         x = (pw - draw_w) / 2.0
-        y = (ph - draw_h) / 2.0
+        y = margin_pt
 
         page = doc.new_page(width=pw, height=ph)
+
         buf = io.BytesIO()
         seg.save(buf, format="PNG")
         stream = buf.getvalue()
@@ -148,29 +160,148 @@ class _GenerateWorker(QThread):
             total = len(segments)
             if total == 0:
                 raise RuntimeError("无法生成分段，请检查裁剪高度与图片有效性")
-            # 逐段写入，周期性报告进度
+
             doc = fitz.open()
             pw, ph = _page_size(self.paper_name, self.landscape)
             avail_w = max(0.0, pw - self.margin_pt * 2)
             avail_h = max(0.0, ph - self.margin_pt * 2)
+
+            # 目标内容区域按纸张比例（宽:高）自动匹配
+            page_ratio = pw / float(ph) if ph > 0 else 1.0
+            target_h = avail_h
+            target_w = target_h * page_ratio
+            if target_w > avail_w:
+                target_w = avail_w
+                target_h = target_w / page_ratio
+
             for i, seg in enumerate(segments, 1):
                 if seg.mode not in ("RGB", "L"):
                     seg = seg.convert("RGB")
-                sw, sh = seg.size
-                scale_w = avail_w / float(sw)
-                scale_h = avail_h / float(sh)
+                seg_w, seg_h = seg.size
+                if seg_w <= 0 or seg_h <= 0:
+                    continue
+
+                scale_w = target_w / float(seg_w)
+                scale_h = target_h / float(seg_h)
                 scale = min(scale_w, scale_h) if (scale_w > 0 and scale_h > 0) else 1.0
-                draw_w = sw * scale
-                draw_h = sh * scale
+                draw_w = seg_w * scale
+                draw_h = seg_h * scale
+
                 x = (pw - draw_w) / 2.0
-                y = (ph - draw_h) / 2.0
+                y = self.margin_pt
                 page = doc.new_page(width=pw, height=ph)
+
                 buf = io.BytesIO()
                 seg.save(buf, format="PNG")
                 stream = buf.getvalue()
                 rect = fitz.Rect(x, y, x + draw_w, y + draw_h)
                 page.insert_image(rect, stream=stream)
+
                 self.progress.emit(int(i * 100 / total))
+
+            os.makedirs(os.path.dirname(self.output_path) or ".", exist_ok=True)
+            doc.save(self.output_path)
+            doc.close()
+            self.finished.emit(self.output_path)
+        except Exception as e:
+            self.failed.emit(str(e))
+
+
+class _GenerateImagesWorker(QThread):
+    progress = Signal(int)
+    finished = Signal(str)
+    failed = Signal(str)
+
+    def __init__(
+        self,
+        image_paths: List[str],
+        output_path: str,
+        paper_name: str,
+        landscape: bool,
+        margin_pt: int,
+        segment_height_px: int,
+        do_split: bool,
+        parent: Optional[QWidget] = None,
+    ):
+        super().__init__(parent)
+        self.image_paths = image_paths
+        self.output_path = output_path
+        self.paper_name = paper_name
+        self.landscape = landscape
+        self.margin_pt = margin_pt
+        self.segment_height_px = segment_height_px
+        self.do_split = do_split
+
+    def run(self):
+        try:
+            ordered = [p for p in self.image_paths if os.path.exists(p)]
+            if len(ordered) == 0:
+                raise RuntimeError("未选择图片")
+
+            doc = fitz.open()
+            pw, ph = _page_size(self.paper_name, self.landscape)
+            avail_w = max(0.0, pw - self.margin_pt * 2)
+            avail_h = max(0.0, ph - self.margin_pt * 2)
+            page_ratio = pw / float(ph) if ph > 0 else 1.0
+            target_h = avail_h
+            target_w = target_h * page_ratio
+            if target_w > avail_w:
+                target_w = avail_w
+                target_h = target_w / page_ratio
+
+            if self.do_split:
+                all_segments = []
+                for p in ordered:
+                    segs = split_image_segments(p, self.segment_height_px)
+                    for s in segs:
+                        all_segments.append((p, s))
+                total_pages = len(all_segments)
+                if total_pages == 0:
+                    raise RuntimeError("无法生成分段")
+                for i, (_, seg) in enumerate(all_segments, 1):
+                    if seg.mode not in ("RGB", "L"):
+                        seg = seg.convert("RGB")
+                    iw, ih = seg.size
+                    if iw <= 0 or ih <= 0:
+                        continue
+                    scale_w = target_w / float(iw)
+                    scale_h = target_h / float(ih)
+                    scale = min(scale_w, scale_h) if (scale_w > 0 and scale_h > 0) else 1.0
+                    draw_w = iw * scale
+                    draw_h = ih * scale
+                    x = (pw - draw_w) / 2.0
+                    y = self.margin_pt
+                    page = doc.new_page(width=pw, height=ph)
+                    buf = io.BytesIO()
+                    seg.save(buf, format="PNG")
+                    stream = buf.getvalue()
+                    rect = fitz.Rect(x, y, x + draw_w, y + draw_h)
+                    page.insert_image(rect, stream=stream)
+                    self.progress.emit(int(i * 100 / total_pages))
+            else:
+                total = len(ordered)
+                for i, p in enumerate(ordered, 1):
+                    im = Image.open(p)
+                    if im.mode not in ("RGB", "L"):
+                        im = im.convert("RGB")
+                    iw, ih = im.size
+                    if iw <= 0 or ih <= 0:
+                        continue
+                    scale_w = target_w / float(iw)
+                    scale_h = target_h / float(ih)
+                    scale = min(scale_w, scale_h) if (scale_w > 0 and scale_h > 0) else 1.0
+                    draw_w = iw * scale
+                    draw_h = ih * scale
+                    x = (pw - draw_w) / 2.0
+                    y = self.margin_pt
+                    page = doc.new_page(width=pw, height=ph)
+                    buf = io.BytesIO()
+                    im.save(buf, format="PNG")
+                    stream = buf.getvalue()
+                    rect = fitz.Rect(x, y, x + draw_w, y + draw_h)
+                    page.insert_image(rect, stream=stream)
+                    self.progress.emit(int(i * 100 / total))
+
             os.makedirs(os.path.dirname(self.output_path) or ".", exist_ok=True)
             doc.save(self.output_path)
             doc.close()
@@ -198,8 +329,10 @@ class Img2PDFWindow(QWidget):
 
         # 状态
         self.image_path: Optional[str] = None
+        self.image_paths: List[str] = []
         self.segments: List[Image.Image] = []
         self.current_index: int = 0
+        self.mode: str = "single_long"
 
         self.setStyleSheet(build_style(self.scale))
         self._build_ui()
@@ -278,10 +411,17 @@ class Img2PDFWindow(QWidget):
         # 上传与输出
         self.row_up = QHBoxLayout()
         self.btn_choose = QPushButton("选择图片"); self.btn_choose.setMinimumHeight(dp(self.scale, 32))
+        self.btn_add_images = QPushButton("追加图片"); self.btn_add_images.setMinimumHeight(dp(self.scale, 32))
+        try:
+            self.btn_add_images.setToolTip("批量追加图片到列表（不替换现有）")
+        except Exception:
+            pass
         self.path_edit = QLineEdit(); self.path_edit.setMinimumHeight(dp(self.scale, 32)); self.path_edit.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
         self.path_edit.setPlaceholderText("请选择要转换的图片文件（PNG/JPEG/BMP 等）")
         self.btn_choose.clicked.connect(self._choose_image)
+        self.btn_add_images.clicked.connect(self._choose_images)
         self.row_up.addWidget(self.btn_choose)
+        self.row_up.addWidget(self.btn_add_images)
         self.row_up.addWidget(self.path_edit, 1)
         ctrl.addLayout(self.row_up)
 
@@ -294,15 +434,27 @@ class Img2PDFWindow(QWidget):
         self.row_out.addWidget(self.out_edit, 1)
         ctrl.addLayout(self.row_out)
 
-        # 裁剪与纸张设置
+        # 模式与裁剪、纸张设置
+        self.row_mode = QHBoxLayout()
+        lab_mode = QLabel("源类型")
+        self.combo_mode = QComboBox(); self.combo_mode.setMinimumHeight(dp(self.scale, 32))
+        self.combo_mode.addItem("长图裁剪")
+        self.combo_mode.addItem("批量裁剪拼接")
+        self.combo_mode.currentTextChanged.connect(self._on_mode_changed)
+        self.row_mode.addWidget(lab_mode)
+        self.row_mode.addWidget(self.combo_mode)
+        ctrl.addLayout(self.row_mode)
         self.row_crop = QHBoxLayout()
         lab_h = QLabel("裁剪高度(px)")
         self.spin_h = QSpinBox(); self.spin_h.setMinimumHeight(dp(self.scale, 32))
         self.spin_h.setRange(50, 50000)
         self.spin_h.setValue(800)
         self.spin_h.valueChanged.connect(self._refresh_segments)
+        self.chk_batch_split = QCheckBox("按裁剪高度分页"); self.chk_batch_split.setMinimumHeight(dp(self.scale, 28))
+        self.chk_batch_split.setChecked(True)
         self.row_crop.addWidget(lab_h)
         self.row_crop.addWidget(self.spin_h)
+        self.row_crop.addWidget(self.chk_batch_split)
         ctrl.addLayout(self.row_crop)
 
         self.row_paper = QHBoxLayout()
@@ -336,6 +488,30 @@ class Img2PDFWindow(QWidget):
         self.list_pages.itemClicked.connect(self._on_page_clicked)
         ctrl.addWidget(self.list_pages)
 
+        lab_images = QLabel("图片列表")
+        ctrl.addWidget(lab_images)
+        self.list_images = QListWidget(); self.list_images.setMinimumHeight(dp(self.scale, 120)); self.list_images.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.list_images.setDragDropMode(QAbstractItemView.InternalMove)
+        try:
+            self.list_images.setDragEnabled(True)
+            self.list_images.setAcceptDrops(True)
+            self.list_images.setDropIndicatorShown(True)
+            self.list_images.setSelectionMode(QAbstractItemView.ExtendedSelection)
+        except Exception:
+            pass
+        self.list_images.itemClicked.connect(self._on_image_clicked)
+        ctrl.addWidget(self.list_images)
+
+        self.images_ops_widget = QFrame()
+        self.row_images_ops = QHBoxLayout(self.images_ops_widget)
+        self.btn_remove_selected = QPushButton("删除选中"); self.btn_remove_selected.setMinimumHeight(dp(self.scale, 32))
+        self.btn_clear_list = QPushButton("清空列表"); self.btn_clear_list.setMinimumHeight(dp(self.scale, 32))
+        self.btn_remove_selected.clicked.connect(self._remove_selected_images)
+        self.btn_clear_list.clicked.connect(self._clear_image_list)
+        self.row_images_ops.addWidget(self.btn_remove_selected)
+        self.row_images_ops.addWidget(self.btn_clear_list)
+        ctrl.addWidget(self.images_ops_widget)
+
         # 操作按钮与进度
         self.row_ops = QHBoxLayout()
         self.btn_gen = QPushButton("开始生成PDF"); self.btn_gen.setMinimumHeight(dp(self.scale, 32))
@@ -368,6 +544,11 @@ class Img2PDFWindow(QWidget):
         self._auto_timer.setInterval(1000)
         self._auto_timer.timeout.connect(self._reflow_layout)
         self._auto_timer.start()
+        try:
+            self.chk_batch_split.stateChanged.connect(self._update_generate_button_text)
+        except Exception:
+            pass
+        self._on_mode_changed(self.combo_mode.currentText())
 
     def _sum_layout_min_width(self, lay: QBoxLayout) -> int:
         try:
@@ -426,9 +607,11 @@ class Img2PDFWindow(QWidget):
             rows = [
                 self.row_up,
                 self.row_out,
+                self.row_mode,
                 self.row_crop,
                 self.row_paper,
                 self.row_margin,
+                self.row_images_ops,
                 self.row_ops,
                 self.nav_row,
             ]
@@ -487,17 +670,23 @@ class Img2PDFWindow(QWidget):
 
             # 右侧控件
             ensure_h(self.btn_choose, 32)
+            ensure_h(self.btn_add_images, 32)
             ensure_h(self.path_edit, 32)
             ensure_h(self.btn_out, 32)
             ensure_h(self.out_edit, 32)
             ensure_h(self.spin_h, 32)
+            ensure_h(self.chk_batch_split, 28, extra=6)
             ensure_h(self.combo_paper, 32)
             ensure_h(self.chk_land, 28, extra=6)
             ensure_h(self.spin_margin, 32)
             ensure_h(self.btn_gen, 32)
             ensure_h(self.progress, 24, extra=6)
+            ensure_h(self.combo_mode, 32)
             self.list_pages.setMinimumHeight(H(120))
+            self.list_images.setMinimumHeight(H(120))
             ensure_h(self.log_label, 24, extra=4)
+            ensure_h(self.btn_remove_selected, 32)
+            ensure_h(self.btn_clear_list, 32)
 
             # 预览导航与预览区域最小尺寸
             ensure_h(self.btn_prev, 32)
@@ -523,20 +712,65 @@ class Img2PDFWindow(QWidget):
             pass
 
     def _choose_image(self):
-        path, _ = QFileDialog.getOpenFileName(
+        if self.mode == "multi_images":
+            paths, _ = QFileDialog.getOpenFileNames(
+                self,
+                "添加图片",
+                "",
+                "图片文件 (*.png *.jpg *.jpeg *.bmp *.webp);;所有文件 (*.*)",
+            )
+            if paths:
+                self._add_image_paths(paths)
+                self.combo_mode.setCurrentText("多图合并")
+        else:
+            path, _ = QFileDialog.getOpenFileName(
+                self,
+                "选择图片",
+                "",
+                "图片文件 (*.png *.jpg *.jpeg *.bmp *.webp);;所有文件 (*.*)",
+            )
+            if path:
+                self.image_path = path
+                self.path_edit.setText(path)
+                base = os.path.splitext(os.path.basename(path))[0]
+                out_dir = os.path.dirname(path) or "."
+                self.out_edit.setText(os.path.join(out_dir, f"{base}_converted.pdf"))
+                self._refresh_segments()
+
+    def _choose_images(self):
+        paths, _ = QFileDialog.getOpenFileNames(
             self,
-            "选择图片",
+            "添加图片",
             "",
             "图片文件 (*.png *.jpg *.jpeg *.bmp *.webp);;所有文件 (*.*)",
         )
-        if path:
-            self.image_path = path
-            self.path_edit.setText(path)
-            # 默认输出路径
-            base = os.path.splitext(os.path.basename(path))[0]
-            out_dir = os.path.dirname(path) or "."
-            self.out_edit.setText(os.path.join(out_dir, f"{base}_converted.pdf"))
-            self._refresh_segments()
+        if paths:
+            self._add_image_paths(paths)
+            self.combo_mode.setCurrentText("多图合并")
+
+    def _add_image_paths(self, paths: List[str]):
+        prev_len = len(self.image_paths)
+        self.mode = "multi_images"
+        for p in paths:
+            self.image_paths.append(p)
+            try:
+                im = Image.open(p)
+                if im.mode not in ("RGB", "L"):
+                    im = im.convert("RGB")
+                pm = pil_to_qpixmap(im)
+            except Exception:
+                pm = QPixmap()
+            if not pm.isNull():
+                pm = pm.scaledToHeight(dp(self.scale, 80), Qt.SmoothTransformation)
+            item = QListWidgetItem()
+            item.setText(os.path.basename(p))
+            item.setData(Qt.UserRole, p)
+            if not pm.isNull():
+                item.setIcon(QIcon(pm))
+            self.list_images.addItem(item)
+        if len(self.image_paths) > 0 and prev_len == 0:
+            self.current_index = 0
+        self._update_preview()
 
     def _choose_output(self):
         path, _ = QFileDialog.getSaveFileName(
@@ -579,28 +813,65 @@ class Img2PDFWindow(QWidget):
         except Exception:
             pass
 
-    def _prev(self):
-        if not self.segments:
-            return
-        if self.current_index > 0:
-            self.current_index -= 1
+    def _on_image_clicked(self, item: QListWidgetItem):
+        try:
+            path = str(item.data(Qt.UserRole))
+            idx = self.image_paths.index(path) if path in self.image_paths else 0
+            self.current_index = max(0, min(idx, len(self.image_paths) - 1))
             self._update_preview()
+        except Exception:
+            pass
+
+    def _prev(self):
+        if self.mode == "multi_images":
+            if not self.image_paths:
+                return
+            if self.current_index > 0:
+                self.current_index -= 1
+                self._update_preview()
+        else:
+            if not self.segments:
+                return
+            if self.current_index > 0:
+                self.current_index -= 1
+                self._update_preview()
 
     def _next(self):
-        if not self.segments:
-            return
-        if self.current_index + 1 < len(self.segments):
-            self.current_index += 1
-            self._update_preview()
+        if self.mode == "multi_images":
+            if not self.image_paths:
+                return
+            if self.current_index + 1 < len(self.image_paths):
+                self.current_index += 1
+                self._update_preview()
+        else:
+            if not self.segments:
+                return
+            if self.current_index + 1 < len(self.segments):
+                self.current_index += 1
+                self._update_preview()
 
     def _update_preview(self):
-        if not self.segments:
-            self.preview_label.setPixmap(QPixmap())
-            self.preview_label.setText("上传图片以预览")
-            self.page_info.setText("第 0/0 页")
-            return
-        seg = self.segments[self.current_index]
-        pm = pil_to_qpixmap(seg)
+        if self.mode == "multi_images":
+            if not self.image_paths:
+                self.preview_label.setPixmap(QPixmap())
+                self.preview_label.setText("添加图片以预览")
+                self.page_info.setText("第 0/0 页")
+                return
+            try:
+                im = Image.open(self.image_paths[self.current_index])
+                if im.mode not in ("RGB", "L"):
+                    im = im.convert("RGB")
+                pm = pil_to_qpixmap(im)
+            except Exception:
+                pm = QPixmap()
+        else:
+            if not self.segments:
+                self.preview_label.setPixmap(QPixmap())
+                self.preview_label.setText("上传图片以预览")
+                self.page_info.setText("第 0/0 页")
+                return
+            seg = self.segments[self.current_index]
+            pm = pil_to_qpixmap(seg)
         # 模拟页面尺寸的适配显示：按选中纸张与横向设置，计算比例，再适配到预览窗口
         paper = self.combo_paper.currentText() or "A4"
         landscape = self.chk_land.isChecked()
@@ -620,7 +891,8 @@ class Img2PDFWindow(QWidget):
         pm = pm.scaled(target_w, target_h, Qt.KeepAspectRatio, Qt.SmoothTransformation)
         self.preview_label.setPixmap(pm)
         self.preview_label.setAlignment(Qt.AlignCenter)
-        self.page_info.setText(f"第 {self.current_index+1}/{len(self.segments)} 页  · {paper}{'-横向' if landscape else ''}")
+        total = len(self.image_paths) if self.mode == "multi_images" else len(self.segments)
+        self.page_info.setText(f"第 {self.current_index+1}/{total} 页  · {paper}{'-横向' if landscape else ''}")
 
     def resizeEvent(self, event):
         super().resizeEvent(event)
@@ -634,40 +906,110 @@ class Img2PDFWindow(QWidget):
         except Exception:
             pass
 
+    def _on_mode_changed(self, text: str):
+        self.mode = "multi_images" if (text or "") != "长图裁剪" else "single_long"
+        is_multi = self.mode == "multi_images"
+        self.btn_choose.setVisible(True)
+        self.path_edit.setVisible(not is_multi)
+        self.list_pages.setVisible(not is_multi)
+        self.btn_add_images.setVisible(True)
+        self.list_images.setVisible(is_multi)
+        self.images_ops_widget.setVisible(is_multi)
+        self._update_generate_button_text()
+        self._update_preview()
+
+    def _update_generate_button_text(self):
+        try:
+            if self.mode == "multi_images" and bool(self.chk_batch_split.isChecked()):
+                self.btn_gen.setText("开始批量裁剪并生成PDF")
+            else:
+                self.btn_gen.setText("开始生成PDF")
+        except Exception:
+            pass
+
+    def _remove_selected_images(self):
+        items = self.list_images.selectedItems()
+        if not items:
+            return
+        for it in items:
+            path = str(it.data(Qt.UserRole))
+            try:
+                idx = self.image_paths.index(path)
+                self.image_paths.pop(idx)
+            except Exception:
+                pass
+            row = self.list_images.row(it)
+            self.list_images.takeItem(row)
+        self.current_index = 0 if self.image_paths else 0
+        self._update_preview()
+
+    def _clear_image_list(self):
+        self.image_paths = []
+        self.list_images.clear()
+        self.current_index = 0
+        self._update_preview()
+
     def _start_generate(self):
-        if not self.image_path:
-            self.log_label.setText("请先选择图片")
-            return
-        if not self.segments:
-            self.log_label.setText("请调整裁剪高度以生成预览")
-            return
-        out = self.out_edit.text().strip()
-        if not out:
-            base = os.path.splitext(os.path.basename(self.image_path))[0]
-            out = os.path.join(os.path.dirname(self.image_path) or ".", f"{base}_converted.pdf")
-            self.out_edit.setText(out)
         paper = self.combo_paper.currentText() or "A4"
         land = self.chk_land.isChecked()
         margin = int(self.spin_margin.value())
-
-        # 使用线程生成，避免阻塞 UI
-        self.btn_gen.setEnabled(False)
-        self.progress.setValue(0)
-        self.log_label.setText("正在生成PDF...")
-        self._worker = _GenerateWorker(
-            img_path=self.image_path,
-            segment_height_px=int(self.spin_h.value()),
-            output_path=out,
-            paper_name=paper,
-            landscape=land,
-            margin_pt=margin,
-        )
-        self._worker.progress.connect(self.progress.setValue)
-        self._worker.finished.connect(self._on_generate_ok)
-        self._worker.failed.connect(self._on_generate_fail)
-        self._worker.finished.connect(lambda _: self.btn_gen.setEnabled(True))
-        self._worker.failed.connect(lambda _: self.btn_gen.setEnabled(True))
-        self._worker.start()
+        out = self.out_edit.text().strip()
+        if self.mode == "multi_images":
+            items = [self.list_images.item(i) for i in range(self.list_images.count())]
+            ordered_paths = [str(it.data(Qt.UserRole)) for it in items if it and it.data(Qt.UserRole)]
+            if not ordered_paths:
+                self.log_label.setText("请先添加图片")
+                return
+            if not out:
+                base = os.path.splitext(os.path.basename(ordered_paths[0]))[0]
+                out = os.path.join(os.path.dirname(ordered_paths[0]) or ".", f"{base}_merged.pdf")
+                self.out_edit.setText(out)
+            self.btn_gen.setEnabled(False)
+            self.progress.setValue(0)
+            self.log_label.setText("正在生成PDF...")
+            self._worker = _GenerateImagesWorker(
+                image_paths=ordered_paths,
+                output_path=out,
+                paper_name=paper,
+                landscape=land,
+                margin_pt=margin,
+                segment_height_px=int(self.spin_h.value()),
+                do_split=bool(self.chk_batch_split.isChecked()),
+            )
+            self._worker.progress.connect(self.progress.setValue)
+            self._worker.finished.connect(self._on_generate_ok)
+            self._worker.failed.connect(self._on_generate_fail)
+            self._worker.finished.connect(lambda _: self.btn_gen.setEnabled(True))
+            self._worker.failed.connect(lambda _: self.btn_gen.setEnabled(True))
+            self._worker.start()
+        else:
+            if not self.image_path:
+                self.log_label.setText("请先选择图片")
+                return
+            if not self.segments:
+                self.log_label.setText("请调整裁剪高度以生成预览")
+                return
+            if not out:
+                base = os.path.splitext(os.path.basename(self.image_path))[0]
+                out = os.path.join(os.path.dirname(self.image_path) or ".", f"{base}_converted.pdf")
+                self.out_edit.setText(out)
+            self.btn_gen.setEnabled(False)
+            self.progress.setValue(0)
+            self.log_label.setText("正在生成PDF...")
+            self._worker = _GenerateWorker(
+                img_path=self.image_path,
+                segment_height_px=int(self.spin_h.value()),
+                output_path=out,
+                paper_name=paper,
+                landscape=land,
+                margin_pt=margin,
+            )
+            self._worker.progress.connect(self.progress.setValue)
+            self._worker.finished.connect(self._on_generate_ok)
+            self._worker.failed.connect(self._on_generate_fail)
+            self._worker.finished.connect(lambda _: self.btn_gen.setEnabled(True))
+            self._worker.failed.connect(lambda _: self.btn_gen.setEnabled(True))
+            self._worker.start()
 
     def _on_generate_ok(self, path: str):
         self.log_label.setText(f"生成完成：{path}")
