@@ -1,0 +1,63 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>HTML 展示系统</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <div class="topbar simple">
+    <div class="brand">
+      <img src="/static/logo.svg" class="logo" alt="Logo">
+      <div class="title">文章-对外接口</div>
+    </div>
+  </div>
+
+  <div class="layout">
+    <div class="sidebar">
+      <div class="section-title">目录与文件</div>
+      <ul class="tree-root">
+      {% for node in tree.children recursive %}
+        {% if node.type == 'dir' %}
+          <li>
+            <span class="dir" onclick="toggle(this)">{{ node.name }}</span>
+            <ul class="nested">{{ loop(node.children) }}</ul>
+          </li>
+        {% else %}
+          <li>
+            <span class="file" data-name="{{ node.name }}"
+                  data-relpath="{{ node.relpath }}"
+                  data-raw="{{ url_for('raw_file', relpath=node.relpath) }}"
+                  data-view="{% if node.is_html %}{{ url_for('view_file', relpath=node.relpath) }}{% endif %}">
+              {{ node.name }}
+            </span>
+          </li>
+        {% endif %}
+      {% endfor %}
+      </ul>
+    </div>
+    <div class="content">
+      <div class="section-title">文件详情</div>
+      <div id="details">
+        <div class="empty">请选择左侧的文件</div>
+      </div>
+      <div class="links">
+        <div class="link-row">
+          <label>原始链接</label>
+          <input id="raw-link" class="link-input" readonly value="">
+          <button class="btn" onclick="copyValue('raw-link')">复制</button>
+          <a id="raw-open" class="btn" target="_blank">打开</a>
+        </div>
+        <div class="link-row">
+          <label>查看链接</label>
+          <input id="view-link" class="link-input" readonly value="">
+          <button class="btn" onclick="copyValue('view-link')">复制</button>
+          <a id="view-open" class="btn" target="_blank">打开</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/static/script.js"></script>
+</body>
+</html>

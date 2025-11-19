@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="160" height="40" viewBox="0 0 160 40">
+  <rect x="2" y="2" width="36" height="36" rx="6" fill="#0a69c7"/>
+  <text x="20" y="25" text-anchor="middle" font-size="16" fill="#fff" font-family="Segoe UI, Roboto, Arial">HS</text>
+  <text x="56" y="26" font-size="18" fill="#0a69c7" font-family="Segoe UI, Roboto, Arial">HTML Show</text>
+</svg>
