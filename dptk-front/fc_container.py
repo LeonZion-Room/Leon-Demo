@@ -25,7 +25,7 @@ def fc_container_2():
     # ---------------------- 内容 ----------------------
     st.code("""
 - 此项目为 25年7月启动开发的投控OA系统，用于管理投控公司相关流程与各类必要日常服务
-- 服务器部署于 大鹏新区-生命科学产业园-政数局-B1机房
+- 服务器部署于 大鹏新区-生命科学产业园-政数局-A1机房
 - 现处于试运行阶段,现将相关安排公告如下：
     1. 新系统上线初期实行新旧系统并行运行，大家可通过新系统进行数据测试操作。
     2. 测试期间，业务审核仍以旧系统流程为准，请务必严格遵照执行。
@@ -36,22 +36,17 @@ def fc_container_2():
     st.divider()
 
     # 卡片与入口
-    cols = st.columns(3)
+    cols = st.columns(2)
     with cols[0]:
-        st.info("##### 公司网络环境-入口")
+        st.info("##### 试运行系统-入口")
         zyoa_img = "https://ts2.tc.mm.bing.net/th/id/OIP-C.SGvcMipdtXRb2Dd-a7wXxgHaFj?rs=1&pid=ImgDetMain&o=7&rm=3"
-        zyoa_url = "http://119.145.17.34:8012/seeyon/index.jsp"
-        fc_card(title="0A-2025-入口",text="新版预上线OA | 公司内网环境 | 访问速度更快",image=zyoa_img,url=zyoa_url)
-    with cols[1]:
-        st.info("##### 非公司网络环境-入口")
-        zyoa_img = "https://ts2.tc.mm.bing.net/th/id/OIP-C.SGvcMipdtXRb2Dd-a7wXxgHaFj?rs=1&pid=ImgDetMain&o=7&rm=3"
-        zyoa_url = "http://172.168.10.97:8012/seeyon/index.jsp"
+        zyoa_url = "http://119.145.17.34:8012/"
         fc_card(title="0A-2025-入口",text="新版预上线OA | 外网环境 | 访问更灵活",image=zyoa_img,url=zyoa_url)
-    with cols[2]:
+    with cols[1]:
         st.warning("##### OA-2025开发环境入口")
         zyoa_img = "https://ts2.tc.mm.bing.net/th/id/OIP-C.SGvcMipdtXRb2Dd-a7wXxgHaFj?rs=1&pid=ImgDetMain&o=7&rm=3"
         zyoa_url = "http://218.18.233.27:8012"
-        fc_card(title="OA-2025-开发环境",text="用于开发 | 实时跟进新需求与开发 | 确定后将合并入正式环境",image=zyoa_img,url=zyoa_url)
+        fc_card(title="OA-2025-开发环境",text="用于开发 | 实时跟进新需求与开发 | 确定后将合并入正式环境 | OA对接时使用该系统，其他情况默认使用试运行系统",image=zyoa_img,url=zyoa_url)
 
 
     # ---------------------- 页脚 ----------------------
@@ -110,13 +105,13 @@ def fc_container_3():
     with cols[1]:
         st.warning("##### 说明书-pdf-下载")
         table_data = [
-            {"文件名称": "0A-2025-首页", "下载链接": ""},
-            {"文件名称": "0A-2025-日常审批", "下载链接": "新版预上线OA | 公司内网环境 | 访问速度更快"},
-            {"文件名称": "0A-2025-督办模块", "下载链接": "新版预上线OA | 公司内网环境 | 访问速度更快"},
-            {"文件名称": "0A-2025-法务模块", "下载链接": "新版预上线OA | 公司内网环境 | 访问速度更快"},
-            {"文件名称": "0A-2025-招采模块", "下载链接": "新版预上线OA | 公司内网环境 | 访问速度更快"},
-            {"文件名称": "0A-2025-预算模块", "下载链接": "新版预上线OA | 公司内网环境 | 访问速度更快"},
-            {"文件名称": "0A-2025-费用模块", "下载链接": "新版预上线OA | 公司内网环境 | 访问速度更快"},
+            {"文件名称": "0A-2025-首页", "下载链接": "http://119.145.17.34:5666/s/adf4809c3a1b4736a4"},
+            {"文件名称": "0A-2025-日常审批", "下载链接": "http://119.145.17.34:5666/s/adf4809c3a1b4736a4"},
+            {"文件名称": "0A-2025-督办模块", "下载链接": "http://119.145.17.34:5666/s/adf4809c3a1b4736a4"},
+            {"文件名称": "0A-2025-法务模块", "下载链接": "http://119.145.17.34:5666/s/adf4809c3a1b4736a4"},
+            {"文件名称": "0A-2025-招采模块", "下载链接": "http://119.145.17.34:5666/s/adf4809c3a1b4736a4"},
+            {"文件名称": "0A-2025-预算模块", "下载链接": "http://119.145.17.34:5666/s/adf4809c3a1b4736a4"},
+            {"文件名称": "0A-2025-费用模块", "下载链接": "http://119.145.17.34:5666/s/adf4809c3a1b4736a4"},
         ]
         st.table(table_data)
 

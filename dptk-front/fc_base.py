@@ -336,8 +336,9 @@ def fc_foot():
             unsafe_allow_html=True,
         )
     with cols[2]:
-        st.markdown("**详情请联系**")
-        st.image("mine.png", use_container_width=True)
+      pass
+        # st.markdown("**详情请联系**")
+        # st.image("mine.png", use_container_width=True)
 
 def render_carousel(
     slides,

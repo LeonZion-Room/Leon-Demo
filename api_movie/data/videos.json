@@ -10,5 +10,65 @@
     "size_compressed": 5743598,
     "duration_original": 80.57,
     "duration_compressed": 80.57
+  },
+  {
+    "id": "23fda320-bfeb-44f1-9cb1-bc54294f1eae",
+    "name": "日常审批",
+    "crf": 18,
+    "original_path": "C:\\Users\\leonz\\Desktop\\WorkSpace\\Leon-Demo\\api_movie\\data\\original\\23fda320-bfeb-44f1-9cb1-bc54294f1eae.mp4",
+    "compressed_path": "C:\\Users\\leonz\\Desktop\\WorkSpace\\Leon-Demo\\api_movie\\data\\compressed\\23fda320-bfeb-44f1-9cb1-bc54294f1eae.mp4",
+    "uploaded_at": "2025-11-17T18:20:38.676916Z",
+    "size_original": 11275934,
+    "size_compressed": 8326284,
+    "duration_original": 80.57,
+    "duration_compressed": 80.57
+  },
+  {
+    "id": "57059362-22d8-45d1-a558-d851c484e830",
+    "name": "督办模块",
+    "crf": 18,
+    "original_path": "C:\\Users\\leonz\\Desktop\\WorkSpace\\Leon-Demo\\api_movie\\data\\original\\57059362-22d8-45d1-a558-d851c484e830.mp4",
+    "compressed_path": "C:\\Users\\leonz\\Desktop\\WorkSpace\\Leon-Demo\\api_movie\\data\\compressed\\57059362-22d8-45d1-a558-d851c484e830.mp4",
+    "uploaded_at": "2025-11-17T18:22:24.559942Z",
+    "size_original": 9095713,
+    "size_compressed": 6977506,
+    "duration_original": 65.77,
+    "duration_compressed": 65.77
+  },
+  {
+    "id": "d6f9b116-e13e-461d-a517-de9a7284cdbf",
+    "name": "法务模块",
+    "crf": 18,
+    "original_path": "C:\\Users\\leonz\\Desktop\\WorkSpace\\Leon-Demo\\api_movie\\data\\original\\d6f9b116-e13e-461d-a517-de9a7284cdbf.mp4",
+    "compressed_path": "C:\\Users\\leonz\\Desktop\\WorkSpace\\Leon-Demo\\api_movie\\data\\compressed\\d6f9b116-e13e-461d-a517-de9a7284cdbf.mp4",
+    "uploaded_at": "2025-11-17T18:23:30.908984Z",
+    "size_original": 12606328,
+    "size_compressed": 9501430,
+    "duration_original": 99.1,
+    "duration_compressed": 99.1
+  },
+  {
+    "id": "feb01396-7197-426f-902a-d9f86d18db90",
+    "name": "招采模块",
+    "crf": 18,
+    "original_path": "C:\\Users\\leonz\\Desktop\\WorkSpace\\Leon-Demo\\api_movie\\data\\original\\feb01396-7197-426f-902a-d9f86d18db90.mp4",
+    "compressed_path": "C:\\Users\\leonz\\Desktop\\WorkSpace\\Leon-Demo\\api_movie\\data\\compressed\\feb01396-7197-426f-902a-d9f86d18db90.mp4",
+    "uploaded_at": "2025-11-17T18:24:12.126013Z",
+    "size_original": 11849957,
+    "size_compressed": 9454879,
+    "duration_original": 72.67,
+    "duration_compressed": 72.67
+  },
+  {
+    "id": "a1df344d-06ff-4a43-bba5-819c4d1d6735",
+    "name": "预算模块",
+    "crf": 23,
+    "original_path": "C:\\Users\\leonz\\Desktop\\WorkSpace\\Leon-Demo\\api_movie\\data\\original\\a1df344d-06ff-4a43-bba5-819c4d1d6735.mp4",
+    "compressed_path": "C:\\Users\\leonz\\Desktop\\WorkSpace\\Leon-Demo\\api_movie\\data\\compressed\\a1df344d-06ff-4a43-bba5-819c4d1d6735.mp4",
+    "uploaded_at": "2025-11-17T18:25:15.906482Z",
+    "size_original": 10058973,
+    "size_compressed": 5183383,
+    "duration_original": 60.03,
+    "duration_compressed": 60.03
   }
 ]
