@@ -6,16 +6,11 @@
   <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
-  <div class="topbar">
-    <form method="get" action="/" class="path-form">
-      <label>根路径</label>
-      <input type="text" name="root" value="{{ base_dir }}" class="path-input" placeholder="输入要浏览的目录路径">
-      <button type="submit">加载</button>
-    </form>
-    <div class="current">当前路径：{{ base_dir }}</div>
-    {% if error %}
-      <div class="error">{{ error }}</div>
-    {% endif %}
+  <div class="topbar simple">
+    <div class="brand">
+      <img src="/static/logo.svg" class="logo" alt="Logo">
+      <div class="title">文章-对外接口</div>
+    </div>
   </div>
 
   <div class="layout">

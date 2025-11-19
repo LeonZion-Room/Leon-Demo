@@ -2,13 +2,15 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>{{ filename }}</title>
+  <title>文章-对外接口</title>
   <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
-  <div class="topbar">
-    <a href="/raw/{{ relpath }}" target="_blank">直接打开</a>
-    <a href="/">返回目录</a>
+  <div class="topbar simple">
+    <div class="brand">
+      <img src="/static/logo.svg" class="logo" alt="Logo">
+      <div class="title">文章-对外接口</div>
+    </div>
   </div>
   <div class="viewer">
     <iframe src="/raw/{{ relpath }}" class="frame" frameborder="0"></iframe>
