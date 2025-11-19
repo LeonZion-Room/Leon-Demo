@@ -1,0 +1,17 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>{{ filename }}</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <div class="topbar">
+    <a href="/raw/{{ relpath }}" target="_blank">直接打开</a>
+    <a href="/">返回目录</a>
+  </div>
+  <div class="viewer">
+    <iframe src="/raw/{{ relpath }}" class="frame" frameborder="0"></iframe>
+  </div>
+</body>
+</html>
