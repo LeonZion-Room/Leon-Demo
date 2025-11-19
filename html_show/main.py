@@ -1,6 +1,6 @@
 from pathlib import Path
 from flask import Flask, render_template, send_from_directory, request, session, redirect, url_for
-
+import os
 app = Flask(__name__)
 app.secret_key = "dev-key"
 
@@ -21,26 +21,23 @@ def build_tree(base: Path, current: Path):
                 "children": subtree["children"],
             })
         else:
+            # 只处理.html和.htm文件
             is_html = entry.suffix.lower() in {".html", ".htm"}
-            files.append({
-                "type": "file",
-                "name": entry.name,
-                "relpath": to_posix_rel(base, entry),
-                "is_html": is_html,
-            })
+            if is_html:  # 只添加HTML文件
+                files.append({
+                    "type": "file",
+                    "name": entry.name,
+                    "relpath": to_posix_rel(base, entry),
+                    "is_html": is_html,
+                })
     return {"children": dirs + files}
 
 
 def get_base_dir() -> Path:
-    root_param = request.args.get("root")
-    if root_param:
-        p = Path(root_param).expanduser()
-        session["base_dir"] = str(p)
-    base = session.get("base_dir")
-    if not base:
-        base = str(Path.cwd())
-        session["base_dir"] = base
-    return Path(base).resolve()
+    # 固定使用html-es目录，不支持其他目录
+    app_dir = Path(__file__).parent
+    base_dir = app_dir / "html-es"
+    return base_dir.resolve()
 
 
 @app.route("/")
@@ -78,4 +75,4 @@ def raw_file(relpath: str):
 
 
 if __name__ == "__main__":
-    app.run(host="127.0.0.1", port=5000, debug=True)
+    app.run(host="0.0.0.0", port=54545, debug=False, threaded=True)
