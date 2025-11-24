@@ -1,0 +1,377 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>可拖拽网格页面</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gridstack@8.2.1/dist/gridstack.min.css">
+  <style>
+    :root { --cell: 120px; --col: 80px; --primary: #1677ff; --bg: #f7f8fa; --card: #ffffff; --grid: #eaeaea; --text: #1f1f1f; }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; background: var(--bg); color: var(--text); }
+    header { position: sticky; top: 0; background: var(--card); display: flex; gap: 8px; align-items: center; padding: 12px; border-bottom: 1px solid #eee; z-index: 10; box-shadow: 0 2px 8px rgba(0,0,0,.06); }
+    header input { flex: 1; padding: 8px; border: 1px solid #d9d9d9; border-radius: 6px; background: var(--card); color: var(--text); }
+    header select { padding: 8px; border: 1px solid #d9d9d9; border-radius: 6px; background: var(--card); color: var(--text); }
+    header button { padding: 8px 12px; border: 0; border-radius: 6px; background: var(--primary); color: #fff; }
+    .grid-stack { margin: 12px; min-height: calc(100vh - 80px);
+      background-size: var(--col) var(--cell);
+      background-image:
+        linear-gradient(to right, var(--grid) 1px, transparent 1px),
+        linear-gradient(to bottom, var(--grid) 1px, transparent 1px);
+      border: 1px dashed var(--grid); border-radius: 8px; background-color: var(--card);
+      font-size: 0;
+    }
+    .grid-stack-item-content { background: var(--card); border: 2px solid var(--primary); border-radius: 12px; box-shadow: 0 0 0 2px rgba(21,84,246,.15) inset, 0 6px 16px rgba(0,0,0,.12); display: flex; flex-direction: column; overflow: hidden; }
+    .card-bar { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; padding: 8px 10px; border-bottom: 1px solid var(--grid); background: var(--card); flex-wrap: wrap; }
+    .card-bar .title { font-weight: 600; font-size: 13px; color: #fff; background: var(--primary); padding: 2px 8px; border-radius: 6px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .card-bar .url { font-size: 12px; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .card-bar .actions { display: flex; gap: 6px; flex: 0 1 auto; flex-wrap: wrap; }
+    .card-bar button { padding: .35em .7em; font-size: clamp(11px, 1.5vw, 13px); border: 0; border-radius: 6px; background: var(--primary); color: #fff; }
+    .card-bar .danger { background: #ff4d4f; }
+    .card-bar select { padding: 4px 8px; border-radius: 6px; border: 1px solid #d9d9d9; background: var(--card); color: var(--text); }
+    .card-bar .inputs { display: flex; gap: 6px; align-items: center; flex: 2 1 320px; min-width: 220px; flex-wrap: wrap; }
+    .card-bar .inputs.hidden { display: none; }
+    .card-bar .title-wrap { display: flex; gap: 8px; align-items: center; flex: 1 1 220px; min-width: 160px; }
+    .card-bar .title-input { padding: 4px 8px; border: 1px solid #d9d9d9; border-radius: 6px; }
+    .card-bar .inputs input[type="text"]{ flex: 1 1 240px; min-width: 140px; max-width: 100%; }
+    .card-bar .inputs select{ flex: 0 1 140px; }
+    .card-body { flex: 1; position: relative; }
+    .card-body .scale-wrap { position: absolute; top: 0; left: 0; width: 100%; height: 100%; overflow: hidden; transform-origin: 0 0; }
+    .card-body .scale-wrap { transform-origin: 0 0; will-change: transform; }
+    .card-body .scale-wrap iframe { width: 100%; height: 100%; transform-origin: 0 0; }
+    .card.collapsed .card-body { display: none; }
+    .card-body iframe { width: 100%; height: 100%; border: 0; }
+    .grid-stack .grid-stack-item-content { font-size: 13px; }
+  </style>
+</head>
+<body>
+  <header>
+    <input id="urlInput" type="text" placeholder="输入要嵌入的网页 URL，如 https://example.com">
+    <select id="themeSelect">
+      <option value="light">浅色</option>
+      <option value="dark">深色</option>
+      <option value="blue">蓝色</option>
+    </select>
+    <button id="addBtn">添加组件</button>
+    <button id="lockBtn">锁定布局</button>
+  </header>
+  <div class="grid-stack"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/gridstack@8.2.1/dist/gridstack-all.min.js"></script>
+  <script type="application/json">
+    const grid = GridStack.init({
+      cellHeight: 120,
+      margin: 0,
+      float: true,
+      column: 12,
+      disableOneColumnMode: true,
+      resizable: { handles: 'e, se, s, sw, w, ne, n, nw' }
+    });
+
+    function updateGridBackground() {
+      document.documentElement.style.setProperty('--cell', grid.opts.cellHeight + 'px');
+      // 优先从首个组件计算单列宽度，避免误差
+      const first = grid.el.querySelector('.grid-stack-item');
+      let colW;
+      if (first) {
+        const w = parseInt(first.getAttribute('gs-w') || '1', 10) || 1;
+        const bw = first.getBoundingClientRect().width;
+        colW = Math.round(bw / w);
+      } else {
+        colW = Math.round(grid.el.clientWidth / grid.opts.column);
+      }
+      document.documentElement.style.setProperty('--col', colW + 'px');
+    }
+    updateGridBackground();
+    window.addEventListener('resize', updateGridBackground);
+
+    function serializeLayout() {
+      const items = [];
+      grid.engine.nodes.forEach(n => {
+        const url = n.el?.querySelector('iframe')?.src || '';
+        const card = n.el?.querySelector('.card');
+        const collapsed = card?.classList.contains('collapsed') || false;
+        const mode = card?.dataset.mode || 'in';
+        const home = card?.dataset.home || url;
+        const current = card?.dataset.current || url;
+        const title = card?.dataset.title || '';
+        items.push({ id: n.id || undefined, x: n.x, y: n.y, w: n.w, h: n.h, url: current, home, mode, collapsed, title });
+      });
+      const theme = currentTheme;
+      return { cellHeight: grid.opts.cellHeight, margin: grid.opts.margin, headerCollapsed: false, locked: grid._isStatic || false, items, theme };
+    }
+
+    async function saveLayout() {
+      try {
+        await fetch('/api/layout', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(serializeLayout()) });
+      } catch (e) {}
+    }
+
+    function addWidget(url, pos) {
+      const el = document.createElement('div');
+      el.className = 'grid-stack-item';
+      const w = pos?.w ?? 4, h = pos?.h ?? 4, x = pos?.x, y = pos?.y;
+      if (x != null) el.setAttribute('gs-x', String(x));
+      if (y != null) el.setAttribute('gs-y', String(y));
+      el.setAttribute('gs-w', String(w));
+      el.setAttribute('gs-h', String(h));
+      if (x == null || y == null) el.setAttribute('gs-auto-position', 'true');
+
+      const content = document.createElement('div');
+      content.className = 'grid-stack-item-content card';
+      content.dataset.mode = pos?.mode || 'in';
+      content.dataset.home = pos?.home || url;
+      content.dataset.current = pos?.url || url;
+      let history = [content.dataset.current];
+      let historyIndex = 0;
+
+      const bar = document.createElement('div');
+      bar.className = 'card-bar';
+      const titleWrap = document.createElement('div');
+      titleWrap.className = 'title-wrap';
+      const titleText = document.createElement('div');
+      titleText.className = 'title';
+      titleText.textContent = (pos?.title ? pos.title : (() => { try { return new URL(content.dataset.current).hostname } catch { return content.dataset.current } })());
+      content.dataset.title = titleText.textContent;
+      const titleInput = document.createElement('input');
+      titleInput.className = 'title-input';
+      titleInput.type = 'text';
+      titleInput.value = content.dataset.title;
+      titleInput.style.width = '160px';
+      titleWrap.appendChild(titleText);
+      const inputsWrap = document.createElement('div');
+      inputsWrap.className = 'inputs hidden';
+      const urlSpan = document.createElement('div');
+      urlSpan.className = 'url';
+      urlSpan.textContent = content.dataset.current;
+      const actions = document.createElement('div');
+      actions.className = 'actions';
+      const toggleBtn = document.createElement('button');
+      toggleBtn.textContent = (pos?.collapsed ? '展开' : '收起');
+      const urlInput = document.createElement('input');
+      urlInput.type = 'text';
+      urlInput.placeholder = '输入链接并回车';
+      urlInput.style.width = '220px';
+      urlInput.value = content.dataset.current;
+      const goBtn = document.createElement('button');
+      goBtn.textContent = '跳转';
+      const backBtn = document.createElement('button');
+      backBtn.textContent = '后退';
+      const homeBtn = document.createElement('button');
+      homeBtn.textContent = '主页';
+      const modeSel = document.createElement('select');
+      modeSel.innerHTML = '<option value="in">组件内</option><option value="out">外部浏览器</option>';
+      modeSel.value = content.dataset.mode;
+      const loaderSel = document.createElement('select');
+      loaderSel.innerHTML = '<option value="direct">直接</option><option value="proxy">代理</option>';
+      loaderSel.value = pos?.loader || 'proxy';
+      const scrollSel = document.createElement('select');
+      scrollSel.innerHTML = '<option value="show">显示滚动条</option><option value="hide">隐藏滚动条</option>';
+      content.dataset.scroll = pos?.scroll || 'hide';
+      scrollSel.value = content.dataset.scroll;
+      const fwdBtn = document.createElement('button');
+      fwdBtn.textContent = '前进';
+      const editToggle = document.createElement('button');
+      editToggle.textContent = '编辑';
+      const closeBtn = document.createElement('button');
+      closeBtn.className = 'danger';
+      closeBtn.textContent = '删除';
+      actions.appendChild(editToggle);
+      actions.appendChild(toggleBtn);
+      actions.appendChild(backBtn);
+      actions.appendChild(homeBtn);
+      actions.appendChild(closeBtn);
+      inputsWrap.appendChild(urlInput);
+      inputsWrap.appendChild(goBtn);
+      inputsWrap.appendChild(modeSel);
+      inputsWrap.appendChild(loaderSel);
+      inputsWrap.appendChild(scrollSel);
+      inputsWrap.appendChild(fwdBtn);
+      inputsWrap.appendChild(urlSpan);
+      bar.appendChild(titleWrap);
+      bar.appendChild(inputsWrap);
+      bar.appendChild(actions);
+
+      const body = document.createElement('div');
+      body.className = 'card-body';
+      const iframe = document.createElement('iframe');
+      iframe.src = content.dataset.current;
+      iframe.setAttribute('allow', 'fullscreen');
+      iframe.setAttribute('sandbox', 'allow-forms allow-modals allow-popups allow-pointer-lock allow-scripts allow-same-origin');
+      body.appendChild(iframe);
+
+      content.appendChild(bar);
+      content.appendChild(body);
+      el.appendChild(content);
+
+      grid.addWidget(el);
+      if (pos?.collapsed) content.classList.add('collapsed');
+
+      function setEditing(on) {
+        inputsWrap.classList.toggle('hidden', !on);
+        if (on) {
+          if (!titleWrap.contains(titleInput)) titleWrap.appendChild(titleInput);
+          editToggle.textContent = '完成';
+          titleText.style.display = 'none';
+        } else {
+          editToggle.textContent = '编辑';
+          titleText.style.display = '';
+          if (titleWrap.contains(titleInput)) titleWrap.removeChild(titleInput);
+        }
+      }
+      editToggle.addEventListener('click', () => {
+        const on = inputsWrap.classList.contains('hidden');
+        setEditing(on);
+      });
+      titleInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          content.dataset.title = titleInput.value.trim() || titleText.textContent;
+          titleText.textContent = content.dataset.title;
+          setEditing(false);
+          saveLayout();
+        }
+      });
+
+      toggleBtn.addEventListener('click', () => {
+        const collapsed = content.classList.toggle('collapsed');
+        toggleBtn.textContent = collapsed ? '展开' : '收起';
+        saveLayout();
+      });
+      function navigateTo(targetUrl, push=true) {
+        const useProxy = loaderSel.value === 'proxy';
+        const hide = scrollSel.value === 'hide';
+        iframe.src = useProxy ? ('/proxy?url=' + encodeURIComponent(targetUrl) + (hide ? '&hide_scroll=1' : '')) : targetUrl;
+        content.dataset.current = targetUrl;
+        urlSpan.textContent = targetUrl;
+        urlInput.value = targetUrl;
+        if (push) {
+          if (history[history.length-1] !== targetUrl) {
+            history.push(targetUrl);
+          }
+          historyIndex = history.length - 1;
+        }
+        saveLayout();
+      }
+      function updateTitleByUrl() {
+        if (!pos?.title) {
+          try { content.dataset.title = new URL(content.dataset.current).hostname } catch { content.dataset.title = content.dataset.current }
+        } else {
+          content.dataset.title = pos.title;
+        }
+        titleText.textContent = content.dataset.title;
+      }
+      urlInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          const u = urlInput.value.trim();
+          if (!u) return;
+          if (modeSel.value === 'out') window.open(u, '_blank'); else navigateTo(u, true);
+          updateTitleByUrl();
+        }
+      });
+      goBtn.addEventListener('click', () => {
+        const u = urlInput.value.trim();
+        if (!u) return;
+        if (modeSel.value === 'out') window.open(u, '_blank'); else navigateTo(u, true);
+        updateTitleByUrl();
+      });
+      backBtn.addEventListener('click', () => {
+        if (historyIndex > 0) {
+          historyIndex -= 1;
+          navigateTo(history[historyIndex], false);
+        }
+      });
+      fwdBtn.addEventListener('click', () => {
+        if (historyIndex < history.length - 1) {
+          historyIndex += 1;
+          navigateTo(history[historyIndex], false);
+        }
+      });
+      homeBtn.addEventListener('click', () => {
+        const u = content.dataset.home || content.dataset.current;
+        navigateTo(u, true);
+        updateTitleByUrl();
+      });
+      modeSel.addEventListener('change', () => {
+        content.dataset.mode = modeSel.value;
+        saveLayout();
+      });
+      loaderSel.addEventListener('change', () => { saveLayout(); navigateTo(content.dataset.current, false); });
+      scrollSel.addEventListener('change', () => { content.dataset.scroll = scrollSel.value; saveLayout(); navigateTo(content.dataset.current, false); });
+      closeBtn.addEventListener('click', () => { grid.removeWidget(el); saveLayout(); });
+
+      saveLayout();
+    }
+
+    document.getElementById('addBtn').addEventListener('click', () => {
+      const url = document.getElementById('urlInput').value.trim();
+      if (!url) return;
+      addWidget(url);
+      document.getElementById('urlInput').value = '';
+    });
+
+    document.getElementById('urlInput').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') document.getElementById('addBtn').click();
+    });
+
+    grid.on('change', () => { saveLayout(); });
+    grid.on('dragstop', () => { saveLayout(); });
+    grid.on('resizestop', () => { saveLayout(); updateGridBackground(); });
+
+    async function loadLayout() {
+      try {
+        const res = await fetch('/api/layout');
+        const data = await res.json();
+        if (data.cellHeight) {
+          grid.opts.cellHeight = data.cellHeight;
+          document.documentElement.style.setProperty('--cell', data.cellHeight + 'px');
+        }
+        if (data.margin != null) grid.opts.margin = data.margin;
+        updateGridBackground();
+        (data.items || []).forEach(item => addWidget(item.url, item));
+        applyTheme(data.theme || { mode: 'light' });
+        document.getElementById('themeSelect').value = (data.theme?.mode || 'light');
+        applyLock(!!data.locked);
+      } catch (e) {}
+    }
+
+    const THEMES = {
+      light: { primary: '#1677ff', bg: '#f7f8fa', card: '#ffffff', grid: '#eaeaea', text: '#1f1f1f' },
+      dark: { primary: '#4096ff', bg: '#141414', card: '#1f1f1f', grid: '#303030', text: '#e8e8e8' },
+      blue: { primary: '#1554F6', bg: '#eef3ff', card: '#ffffff', grid: '#cfd7ff', text: '#0b1b47' }
+    };
+    let currentTheme = { mode: 'light', ...THEMES.light };
+    function applyTheme(theme) {
+      const t = { ...THEMES[theme.mode || 'light'] };
+      currentTheme = { mode: theme.mode || 'light', ...t };
+      for (const [k, v] of Object.entries(t)) document.documentElement.style.setProperty(`--${k}`, v);
+    }
+    document.getElementById('themeSelect').addEventListener('change', (e) => {
+      applyTheme({ mode: e.target.value });
+      saveLayout();
+    });
+
+    function applyLock(locked) {
+      if (typeof grid.setStatic === 'function') grid.setStatic(locked);
+      else {
+        if (grid.enableMove) grid.enableMove(!locked);
+        if (grid.enableResize) grid.enableResize(!locked);
+      }
+      const addBtn = document.getElementById('addBtn');
+      addBtn.disabled = !!locked;
+      addBtn.style.opacity = locked ? '0.6' : '1';
+      const lockBtn = document.getElementById('lockBtn');
+      lockBtn.textContent = locked ? '解锁布局' : '锁定布局';
+      window.__locked = !!locked;
+    }
+
+    document.getElementById('lockBtn').addEventListener('click', () => {
+      const isLocked = !!window.__locked;
+      applyLock(!isLocked);
+      saveLayout();
+    });
+
+    loadLayout();
+  </script>
+  <script src="/static/app.js"></script>
+</body>
+</html>
