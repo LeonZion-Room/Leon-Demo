@@ -1,0 +1,49 @@
+{
+  "tasks": [
+    {
+      "id": "e83268f9",
+      "url": "https://www.doubao.com/",
+      "interval_seconds": 300,
+      "wait_seconds": 3,
+      "baseline_path": "data\\baselines\\e83268f9.png",
+      "created_at": 1764063659,
+      "next_run_ts": 1764064262.4800112,
+      "is_active": true,
+      "records": [
+        {
+          "ts": 1764063678,
+          "screenshot_path": "data\\records\\e83268f9\\1764063678.png",
+          "similarity": 1.0,
+          "is_ok": true
+        },
+        {
+          "ts": 1764063835,
+          "screenshot_path": "data\\records\\e83268f9\\1764063835.png",
+          "similarity": 1.0,
+          "is_ok": true
+        },
+        {
+          "ts": 1764063962,
+          "screenshot_path": "data\\records\\e83268f9\\1764063962.png",
+          "similarity": 0.9997912472547584,
+          "is_ok": true
+        }
+      ]
+    },
+    {
+      "id": "3a365164",
+      "url": "https://www.doubao.com/",
+      "interval_seconds": 300,
+      "wait_seconds": 3,
+      "baseline_path": "data\\baselines\\3a365164.png",
+      "created_at": 1764063988,
+      "next_run_ts": 1764064288.9728222,
+      "is_active": true,
+      "tags": [
+        "豆包"
+      ],
+      "remark": "测试",
+      "records": []
+    }
+  ]
+}
