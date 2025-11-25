@@ -2,16 +2,24 @@ import os
 import sys
 import json
 from PySide6.QtCore import Qt, QUrl, QEvent
-from PySide6.QtGui import QColor, QPainter, QDesktopServices
-from shiboken6 import isValid
-from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QLineEdit, QPushButton, QLabel, QComboBox, QSlider, QColorDialog, QScrollArea, QFrame, QSpinBox
+from PySide6.QtGui import QColor, QPainter, QDesktopServices, QAction
+from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QLineEdit, QPushButton, QLabel, QComboBox, QSlider, QColorDialog, QScrollArea, QFrame, QSpinBox, QDialog, QFormLayout, QDialogButtonBox, QCheckBox, QStyle, QSystemTrayIcon, QMenu
 from PySide6.QtWebEngineWidgets import QWebEngineView
-from PySide6.QtWebEngineCore import QWebEnginePage, QWebEngineScript, QWebEngineProfile
+from PySide6.QtWebEngineCore import QWebEnginePage, QWebEngineScript, QWebEngineProfile, QWebEngineSettings
+try:
+    from shiboken6 import isValid
+except Exception:
+    def isValid(obj):
+        try:
+            return obj is not None
+        except Exception:
+            return False
 
 if getattr(sys, 'frozen', False):
     BASE_DIR = os.path.dirname(sys.executable)
 else:
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+ 
 def get_user_data_dir():
     if os.name == 'nt':
         base = os.environ.get('LOCALAPPDATA') or os.path.join(os.path.expanduser('~'), 'AppData', 'Local')
@@ -46,6 +54,31 @@ class Page(QWebEnginePage):
             return False
         return super().acceptNavigationRequest(url, nav_type, isMainFrame)
 
+    def createWindow(self, type):
+        p = self.parent()
+        if isinstance(p, CardWidget):
+            if getattr(p, 'mode', 'in') == 'out':
+                pg = QWebEnginePage(self.profile())
+                def _on_url_changed(u):
+                    try:
+                        QDesktopServices.openUrl(u)
+                    finally:
+                        pg.deleteLater()
+                pg.urlChanged.connect(_on_url_changed)
+                return pg
+            else:
+                pg = QWebEnginePage(self.profile())
+                def _on_url_changed(u):
+                    try:
+                        self.load(u)
+                    finally:
+                        pg.deleteLater()
+                pg.urlChanged.connect(_on_url_changed)
+                return pg
+        return super().createWindow(type)
+
+ 
+
 class GridContainer(QWidget):
     def __init__(self, mw):
         super().__init__(mw)
@@ -76,7 +109,8 @@ class CardWidget(QFrame):
         self.config = config.copy()
         self.home = self.config.get('home') or self.config.get('url') or ''
         self.current = self.config.get('url') or self.home
-        self.mode = self.config.get('mode') or 'in'
+        self.presetMode = self.config.get('mode') or 'in'
+        self.mode = 'in'
         self.collapsed = bool(self.config.get('collapsed', False))
         self.title = self.config.get('title') or ''
         self.titleColor = self.config.get('titleColor') or '#1677ff'
@@ -98,9 +132,7 @@ class CardWidget(QFrame):
         self.backBtn = QPushButton('后退', self)
         self.fwdBtn = QPushButton('前进', self)
         self.homeBtn = QPushButton('主页', self)
-        self.closeBtn = QPushButton('删除', self)
-        self.closeBtn.setStyleSheet("QPushButton{background:#ff4d4f;color:#fff;border:0;border-radius:6px;padding:6px 10px}")
-        for w in [self.titleLabel, self.editBtn, self.toggleBtn, self.backBtn, self.fwdBtn, self.homeBtn, self.closeBtn]:
+        for w in [self.titleLabel, self.editBtn, self.toggleBtn, self.backBtn, self.fwdBtn, self.homeBtn]:
             if isinstance(w, QLabel):
                 bar.addWidget(w, 1)
             else:
@@ -113,7 +145,7 @@ class CardWidget(QFrame):
         self.goBtn = QPushButton('跳转', self)
         self.modeSel = QComboBox(self)
         self.modeSel.addItems(['组件内','外部浏览器'])
-        self.modeSel.setCurrentIndex(0 if self.mode=='in' else 1)
+        self.modeSel.setCurrentIndex(0)
         self.scrollSel = QComboBox(self)
         self.scrollSel.addItems(['显示滚动条','隐藏滚动条'])
         self.scrollSel.setCurrentIndex(1 if self.scroll=='hide' else 0)
@@ -147,9 +179,22 @@ class CardWidget(QFrame):
             self.web.setPage(Page(mw.webProfile, self))
         else:
             self.web.setPage(Page(self))
+        try:
+            s = self.web.settings()
+            s.setAttribute(QWebEngineSettings.FullScreenSupportEnabled, True)
+            s.setAttribute(QWebEngineSettings.PluginsEnabled, True)
+            s.setAttribute(QWebEngineSettings.WebGLEnabled, True)
+            s.setAttribute(QWebEngineSettings.Accelerated2dCanvasEnabled, True)
+            s.setAttribute(QWebEngineSettings.PlaybackRequiresUserGesture, False)
+            self.web.page().fullScreenRequested.connect(lambda r: r.accept())
+        except Exception:
+            pass
         self.web.installEventFilter(self)
         bodyWrap.addWidget(self.web)
         v.addLayout(bodyWrap)
+        self.applyRewrite = (self.presetMode == 'in')
+        self.initializingLoad = True
+        self.web.loadFinished.connect(self.on_initial_loaded)
         self.apply_collapsed()
         self.apply_zoom(self.zoom)
         self.navigate(self.current, push=False)
@@ -159,8 +204,7 @@ class CardWidget(QFrame):
         self.toggleBtn.clicked.connect(self.toggle_collapse)
         self.backBtn.clicked.connect(self.web.back)
         self.fwdBtn.clicked.connect(self.web.forward)
-        self.homeBtn.clicked.connect(lambda: self.navigate(self.home, push=True))
-        self.closeBtn.clicked.connect(self.on_close)
+        self.homeBtn.clicked.connect(self.on_home)
         self.goBtn.clicked.connect(lambda: self.on_go())
         self.urlEdit.returnPressed.connect(lambda: self.on_go())
         self.modeSel.currentIndexChanged.connect(lambda _: self.on_mode())
@@ -216,6 +260,7 @@ class CardWidget(QFrame):
 
     def on_mode(self):
         self.mode = 'in' if self.modeSel.currentIndex()==0 else 'out'
+        self.applyRewrite = (self.mode == 'in')
         self.save_to_parent()
 
     def on_scroll(self):
@@ -236,6 +281,15 @@ class CardWidget(QFrame):
             self.titleLabel.setStyleSheet(f"QLabel.title{{background:{self.titleColor};}}")
             self.save_to_parent()
 
+    def on_home(self):
+        if not self.home:
+            return
+        q = QUrl.fromUserInput(self.home)
+        if self.mode == 'out':
+            QDesktopServices.openUrl(q)
+        else:
+            self.navigate(self.home, push=True)
+
     def apply_zoom(self, z):
         self.web.setZoomFactor(z)
 
@@ -243,24 +297,35 @@ class CardWidget(QFrame):
         u = self.urlEdit.text().strip()
         if not u:
             return
+        q = QUrl.fromUserInput(u)
         if self.mode == 'out':
-            QDesktopServices.openUrl(QUrl(u))
+            QDesktopServices.openUrl(q)
         else:
             self.navigate(u, push=True)
 
     def navigate(self, url, push=True):
         self.current = url
         self.titleLabel.setText(self.default_title())
-        self.web.load(QUrl(url))
+        self.web.load(QUrl.fromUserInput(url))
         self.inject_scripts()
         if push:
             self.save_to_parent()
 
     def inject_scripts(self):
         hide_css = "html,body{overflow:hidden!important;} ::-webkit-scrollbar{width:0!important;height:0!important;display:none!important;}"
-        js = """
+        compat_js = """
         (function(){try{
-          document.querySelectorAll('a[target="_blank"]').forEach(function(a){a.setAttribute('target','_self');});
+          window.chrome = window.chrome || { runtime: {} };
+          try{Object.defineProperty(navigator,'vendor',{get:function(){return 'Google Inc.'}});}catch(e){}
+          try{Object.defineProperty(navigator,'platform',{get:function(){return 'Win32'}});}catch(e){}
+          try{Object.defineProperty(navigator,'language',{get:function(){return 'zh-CN'}});}catch(e){}
+          try{Object.defineProperty(navigator,'languages',{get:function(){return ['zh-CN','zh','en']}});}catch(e){}
+          try{Object.defineProperty(navigator,'webdriver',{get:function(){return false}});}catch(e){}
+        }catch(e){}})();
+        """
+        in_js = """
+        (function(){try{
+          document.querySelectorAll('a[target=\"_blank\"]').forEach(function(a){a.setAttribute('target','_self');});
           window.open = function(u){location.href=u;};
           document.addEventListener('click',function(e){var a=e.target.closest('a[href]'); if(a){a.setAttribute('target','_self');}});
         }catch(e){}})();
@@ -268,7 +333,20 @@ class CardWidget(QFrame):
         if self.scroll == 'hide':
             css_js = f"(function(){{try{{var s=document.getElementById('__hide_scroll__');if(!s){{s=document.createElement('style');s.id='__hide_scroll__';s.textContent='{hide_css}';document.head.appendChild(s);}}}}catch(e){{}}}})();"
             self.web.page().runJavaScript(css_js)
-        self.web.page().runJavaScript(js)
+        self.web.page().runJavaScript(compat_js)
+        if getattr(self, 'applyRewrite', False):
+            self.web.page().runJavaScript(in_js)
+
+    def on_initial_loaded(self, ok):
+        if getattr(self, 'initializingLoad', False):
+            self.initializingLoad = False
+            self.mode = self.presetMode
+            try:
+                self.modeSel.setCurrentIndex(0 if self.mode=='in' else 1)
+            except Exception:
+                pass
+            self.applyRewrite = (self.mode == 'in')
+            self.save_to_parent()
 
     def to_dict(self):
         return {
@@ -432,12 +510,7 @@ class CardWidget(QFrame):
                 return True
         return QFrame.eventFilter(self, obj, ev)
 
-    def on_close(self):
-        mw = self.parent()
-        while mw and not isinstance(mw, MainWindow):
-            mw = mw.parent()
-        if mw:
-            mw.remove_item(self)
+    
 
 class SpacerWidget(QFrame):
     def __init__(self, parent, config):
@@ -452,10 +525,7 @@ class SpacerWidget(QFrame):
         bar = QHBoxLayout()
         bar.setSpacing(6)
         self.titleLabel = QLabel('格子', self)
-        self.closeBtn = QPushButton('删除', self)
-        self.closeBtn.setStyleSheet("QPushButton{background:#ff4d4f;color:#fff;border:0;border-radius:6px;padding:6px 10px}")
         bar.addWidget(self.titleLabel, 1)
-        bar.addWidget(self.closeBtn)
         v.addLayout(bar)
         self.gridRow = config.get('r') if isinstance(config.get('r'), int) else None
         self.gridCol = config.get('c') if isinstance(config.get('c'), int) else None
@@ -467,8 +537,7 @@ class SpacerWidget(QFrame):
         self.startW = 0
         self.startH = 0
         self.setMouseTracking(True)
-        self.closeBtn.clicked.connect(self.deleteLater)
-        self.closeBtn.clicked.connect(self.on_close)
+        
     def to_dict(self):
         return {
             'type': 'spacer',
@@ -612,11 +681,13 @@ class MainWindow(QMainWindow):
         self.rowSpin = QSpinBox(self)
         self.rowSpin.setRange(1, 999)
         self.rowSpin.setValue(4)
+        
         top.addWidget(self.urlInput, 4)
         top.addWidget(QLabel('列数', self))
         top.addWidget(self.colSpin)
         top.addWidget(QLabel('行数', self))
         top.addWidget(self.rowSpin)
+        
         top.addWidget(self.addBtn)
         top.addWidget(self.addCellBtn)
         top.addWidget(self.editToggleBtn)
@@ -630,6 +701,14 @@ class MainWindow(QMainWindow):
             os.makedirs(cache_dir, exist_ok=True)
             self.webProfile.setPersistentStoragePath(prof_dir)
             self.webProfile.setCachePath(cache_dir)
+            try:
+                self.webProfile.setHttpUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36')
+            except Exception:
+                pass
+            try:
+                self.webProfile.setHttpAcceptLanguage('zh-CN,zh;q=0.9,en;q=0.8')
+            except Exception:
+                pass
             try:
                 self.webProfile.setHttpCacheType(QWebEngineProfile.HttpCacheType.DiskHttpCache)
             except Exception:
@@ -648,6 +727,24 @@ class MainWindow(QMainWindow):
         self.container.setMouseTracking(True)
         self.scrollArea.setWidget(self.container)
         outer.addWidget(self.scrollArea)
+        try:
+            self.tray = QSystemTrayIcon(self)
+            self.tray.setIcon(self.style().standardIcon(QStyle.SP_DesktopIcon))
+            m = QMenu(self)
+            a_show = QAction('显示/弹出', self)
+            a_min = QAction('最小化', self)
+            a_quit = QAction('退出', self)
+            m.addAction(a_show)
+            m.addAction(a_min)
+            m.addAction(a_quit)
+            self.tray.setContextMenu(m)
+            a_show.triggered.connect(self.on_popup_shortcut)
+            a_min.triggered.connect(self.on_min_shortcut)
+            a_quit.triggered.connect(QApplication.instance().quit)
+            self.tray.activated.connect(lambda r: self.on_popup_shortcut() if r == QSystemTrayIcon.Trigger else None)
+            self.tray.show()
+        except Exception:
+            pass
         self.items = []
         self.locked = False
         self.gridCols = 6
@@ -656,12 +753,14 @@ class MainWindow(QMainWindow):
         self.cellW = 300
         self.activeWeb = None
         self.gridRows = int(self.rowSpin.value())
+        self.wasMinimized = False
         self.addBtn.clicked.connect(self.on_add)
         self.lockBtn.clicked.connect(self.on_lock)
         self.addCellBtn.clicked.connect(self.on_add_cell)
         self.editToggleBtn.clicked.connect(self.on_edit_toggle)
         self.colSpin.valueChanged.connect(self.on_change_cols)
         self.rowSpin.valueChanged.connect(self.on_change_rows)
+        
         self.load_layout()
         
 
@@ -733,6 +832,42 @@ class MainWindow(QMainWindow):
                 it.set_editing(target)
         self.editToggleBtn.setText('完成修改' if target else '修改模式')
 
+    
+
+    
+
+    def on_popup_shortcut(self):
+        try:
+            if self.isMinimized() or not self.isVisible() or getattr(self, 'wasMinimized', False):
+                self.showMaximized()
+                self.wasMinimized = False
+                self.raise_()
+                self.activateWindow()
+            else:
+                self.raise_()
+                self.activateWindow()
+        except Exception:
+            pass
+
+    def on_min_shortcut(self):
+        try:
+            self.wasMinimized = True
+            self.showMinimized()
+        except Exception:
+            pass
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
     def add_card(self, cfg):
         c = CardWidget(self.container, cfg)
         self.items.append(c)
@@ -778,6 +913,7 @@ class MainWindow(QMainWindow):
                 self.rowSpin.setValue(self.gridRows)
             except Exception:
                 pass
+        
         self.locked = bool(data.get('locked', False))
         self.lockBtn.setText('解锁布局' if self.locked else '锁定布局')
         self.addBtn.setEnabled(not self.locked)
@@ -887,9 +1023,32 @@ class MainWindow(QMainWindow):
                 continue
             self.place_card(it)
 
+    def showEvent(self, e):
+        try:
+            QMainWindow.showEvent(self, e)
+        except Exception:
+            pass
+        try:
+            if getattr(self, 'wasMinimized', False):
+                self.showMaximized()
+                self.wasMinimized = False
+        except Exception:
+            pass
+
+    
+
     def closeEvent(self, e):
         try:
             self.save_layout()
+        except Exception:
+            pass
+        try:
+            if self.isMinimized():
+                return QMainWindow.closeEvent(self, e)
+            self.wasMinimized = True
+            self.showMinimized()
+            e.ignore()
+            return
         except Exception:
             pass
         return QMainWindow.closeEvent(self, e)
@@ -920,3 +1079,5 @@ def main():
 
 if __name__ == '__main__':
     main()
+    
+    
