@@ -13,3 +13,4 @@
 
 
 
+.venv\Scripts\python.exe -m PyInstaller --noconfirm --clean --name CardGrid --windowed --add-data "pyside_exe_card\data\layout.json;pyside_exe_card\data" --onefile  pyside_exe_card\app.py

@@ -31,8 +31,26 @@ LAYOUT_PATH = os.path.join(DATA_DIR, 'layout.json')
 def ensure_data():
     os.makedirs(DATA_DIR, exist_ok=True)
     if not os.path.exists(LAYOUT_PATH):
-        with open(LAYOUT_PATH, 'w', encoding='utf-8') as f:
-            json.dump({"locked": False, "items": []}, f, ensure_ascii=False, indent=2)
+        try:
+            base = getattr(sys, '_MEIPASS', BASE_DIR)
+            cand = [
+                os.path.join(base, 'pyside_exe_card', 'data', 'layout.json'),
+                os.path.join(BASE_DIR, 'pyside_exe_card', 'data', 'layout.json'),
+                os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data', 'layout.json')
+            ]
+            for src in cand:
+                if os.path.exists(src):
+                    with open(src, 'r', encoding='utf-8') as f:
+                        d = json.load(f)
+                    with open(LAYOUT_PATH, 'w', encoding='utf-8') as g:
+                        json.dump(d, g, ensure_ascii=False, indent=2)
+                    break
+            else:
+                with open(LAYOUT_PATH, 'w', encoding='utf-8') as f:
+                    json.dump({"locked": False, "items": []}, f, ensure_ascii=False, indent=2)
+        except Exception:
+            with open(LAYOUT_PATH, 'w', encoding='utf-8') as f:
+                json.dump({"locked": False, "items": []}, f, ensure_ascii=False, indent=2)
 
 def load_layout():
     ensure_data()
@@ -132,7 +150,9 @@ class CardWidget(QFrame):
         self.backBtn = QPushButton('后退', self)
         self.fwdBtn = QPushButton('前进', self)
         self.homeBtn = QPushButton('主页', self)
-        for w in [self.titleLabel, self.editBtn, self.toggleBtn, self.backBtn, self.fwdBtn, self.homeBtn]:
+        self.closeBtn = QPushButton('删除', self)
+        self.closeBtn.setStyleSheet("QPushButton{background:#ff4d4f;color:#fff;border:0;border-radius:6px;padding:6px 10px}")
+        for w in [self.titleLabel, self.editBtn, self.toggleBtn, self.backBtn, self.fwdBtn, self.homeBtn, self.closeBtn]:
             if isinstance(w, QLabel):
                 bar.addWidget(w, 1)
             else:
@@ -205,6 +225,7 @@ class CardWidget(QFrame):
         self.backBtn.clicked.connect(self.web.back)
         self.fwdBtn.clicked.connect(self.web.forward)
         self.homeBtn.clicked.connect(self.on_home)
+        self.closeBtn.clicked.connect(self.on_close)
         self.goBtn.clicked.connect(lambda: self.on_go())
         self.urlEdit.returnPressed.connect(lambda: self.on_go())
         self.modeSel.currentIndexChanged.connect(lambda _: self.on_mode())
@@ -221,6 +242,13 @@ class CardWidget(QFrame):
         self.startW = 0
         self.startH = 0
         self.setMouseTracking(True)
+
+    def on_close(self):
+        mw = self.parent()
+        while mw and not isinstance(mw, MainWindow):
+            mw = mw.parent()
+        if mw:
+            mw.remove_item(self)
 
     def default_title(self):
         if self.title:
@@ -525,7 +553,10 @@ class SpacerWidget(QFrame):
         bar = QHBoxLayout()
         bar.setSpacing(6)
         self.titleLabel = QLabel('格子', self)
+        self.closeBtn = QPushButton('删除', self)
+        self.closeBtn.setStyleSheet("QPushButton{background:#ff4d4f;color:#fff;border:0;border-radius:6px;padding:6px 10px}")
         bar.addWidget(self.titleLabel, 1)
+        bar.addWidget(self.closeBtn)
         v.addLayout(bar)
         self.gridRow = config.get('r') if isinstance(config.get('r'), int) else None
         self.gridCol = config.get('c') if isinstance(config.get('c'), int) else None
@@ -537,7 +568,7 @@ class SpacerWidget(QFrame):
         self.startW = 0
         self.startH = 0
         self.setMouseTracking(True)
-        
+        self.closeBtn.clicked.connect(self.on_close)
     def to_dict(self):
         return {
             'type': 'spacer',
@@ -552,6 +583,12 @@ class SpacerWidget(QFrame):
             mw = mw.parent()
         if mw:
             mw.save_layout()
+    def on_close(self):
+        mw = self.parent()
+        while mw and not isinstance(mw, MainWindow):
+            mw = mw.parent()
+        if mw:
+            mw.remove_item(self)
     def hitHandle(self, pos):
         r = 8
         onRight = pos.x() >= self.width() - r
@@ -666,6 +703,10 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.setWindowTitle('LZ-Panel')
         self.resize(1200, 800)
+        try:
+            self.setWindowFlag(Qt.FramelessWindowHint, True)
+        except Exception:
+            pass
         cw = QWidget()
         self.setCentralWidget(cw)
         outer = QVBoxLayout(cw)
@@ -675,6 +716,8 @@ class MainWindow(QMainWindow):
         self.lockBtn = QPushButton('锁定布局', self)
         self.addCellBtn = QPushButton('添加格子', self)
         self.editToggleBtn = QPushButton('修改模式', self)
+        self.fullToggleBtn = QPushButton('最大化', self)
+        self.resizeToggleBtn = QPushButton('允许拖动大小', self)
         self.colSpin = QSpinBox(self)
         self.colSpin.setRange(1, 24)
         self.colSpin.setValue(6)
@@ -692,6 +735,8 @@ class MainWindow(QMainWindow):
         top.addWidget(self.addCellBtn)
         top.addWidget(self.editToggleBtn)
         top.addWidget(self.lockBtn)
+        top.addWidget(self.fullToggleBtn)
+        top.addWidget(self.resizeToggleBtn)
         outer.addLayout(top)
         self.webProfile = QWebEngineProfile('CardGrid', self)
         try:
@@ -754,13 +799,25 @@ class MainWindow(QMainWindow):
         self.activeWeb = None
         self.gridRows = int(self.rowSpin.value())
         self.wasMinimized = False
+        self.isFullscreen = False
+        self.windowResizable = True
+        self._wmResizing = False
+        self._wmEdge = None
+        self._wmStartGeom = None
+        self._wmStartPos = None
         self.addBtn.clicked.connect(self.on_add)
         self.lockBtn.clicked.connect(self.on_lock)
         self.addCellBtn.clicked.connect(self.on_add_cell)
         self.editToggleBtn.clicked.connect(self.on_edit_toggle)
+        self.fullToggleBtn.clicked.connect(self.on_toggle_fullscreen)
+        self.resizeToggleBtn.clicked.connect(self.on_toggle_resizable)
         self.colSpin.valueChanged.connect(self.on_change_cols)
         self.rowSpin.valueChanged.connect(self.on_change_rows)
-        
+        try:
+            cw.setMouseTracking(True)
+            cw.installEventFilter(self)
+        except Exception:
+            pass
         self.load_layout()
         
 
@@ -853,6 +910,30 @@ class MainWindow(QMainWindow):
         try:
             self.wasMinimized = True
             self.showMinimized()
+        except Exception:
+            pass
+
+    def on_toggle_fullscreen(self):
+        try:
+            if not self.isFullscreen:
+                self.showMaximized()
+                self.isFullscreen = True
+                self.fullToggleBtn.setText('窗口')
+            else:
+                self.showNormal()
+                self.isFullscreen = False
+                self.fullToggleBtn.setText('最大化')
+        except Exception:
+            pass
+
+    def on_toggle_resizable(self):
+        try:
+            self.windowResizable = not self.windowResizable
+            self.resizeToggleBtn.setText('允许拖动大小' if self.windowResizable else '禁止拖动大小')
+            try:
+                self.centralWidget().setCursor(Qt.ArrowCursor)
+            except Exception:
+                pass
         except Exception:
             pass
 
@@ -1034,6 +1115,107 @@ class MainWindow(QMainWindow):
                 self.wasMinimized = False
         except Exception:
             pass
+
+    def eventFilter(self, obj, ev):
+        try:
+            if obj is self.centralWidget():
+                if ev.type() == QEvent.MouseButtonPress and ev.button() == Qt.LeftButton:
+                    if self.windowResizable and not self.isFullscreen:
+                        gp = obj.mapToGlobal(ev.position().toPoint())
+                        edge = self._hit_window_edge(gp)
+                        if edge:
+                            self._wmResizing = True
+                            self._wmEdge = edge
+                            self._wmStartGeom = self.frameGeometry()
+                            self._wmStartPos = gp
+                            return True
+                elif ev.type() == QEvent.MouseMove:
+                    if self._wmResizing and self.windowResizable and not self.isFullscreen:
+                        gp = obj.mapToGlobal(ev.position().toPoint())
+                        dx = gp.x() - self._wmStartPos.x()
+                        dy = gp.y() - self._wmStartPos.y()
+                        g = self._wmStartGeom
+                        r = g
+                        if self._wmEdge in ('left','lt','lb'):
+                            nl = r.left() + dx
+                            if r.right() - nl < self.minimumWidth():
+                                nl = r.right() - self.minimumWidth()
+                            r.setLeft(nl)
+                        if self._wmEdge in ('right','rt','rb'):
+                            nr = r.right() + dx
+                            if nr - r.left() < self.minimumWidth():
+                                nr = r.left() + self.minimumWidth()
+                            r.setRight(nr)
+                        if self._wmEdge in ('top','lt','rt'):
+                            nt = r.top() + dy
+                            if r.bottom() - nt < self.minimumHeight():
+                                nt = r.bottom() - self.minimumHeight()
+                            r.setTop(nt)
+                        if self._wmEdge in ('bottom','lb','rb'):
+                            nb = r.bottom() + dy
+                            if nb - r.top() < self.minimumHeight():
+                                nb = r.top() + self.minimumHeight()
+                            r.setBottom(nb)
+                        self.setGeometry(r)
+                        return True
+                    else:
+                        if self.windowResizable and not self.isFullscreen:
+                            gp = obj.mapToGlobal(ev.position().toPoint())
+                            edge = self._hit_window_edge(gp)
+                            if edge in ('left','right'):
+                                obj.setCursor(Qt.SizeHorCursor)
+                            elif edge in ('top','bottom'):
+                                obj.setCursor(Qt.SizeVerCursor)
+                            elif edge in ('lt','rb'):
+                                obj.setCursor(Qt.SizeFDiagCursor)
+                            elif edge in ('rt','lb'):
+                                obj.setCursor(Qt.SizeBDiagCursor)
+                            else:
+                                obj.setCursor(Qt.ArrowCursor)
+                elif ev.type() == QEvent.MouseButtonRelease and ev.button() == Qt.LeftButton:
+                    if self._wmResizing:
+                        self._wmResizing = False
+                        self._wmEdge = None
+                        try:
+                            obj.setCursor(Qt.ArrowCursor)
+                        except Exception:
+                            pass
+        except Exception:
+            pass
+        try:
+            return QMainWindow.eventFilter(self, obj, ev)
+        except Exception:
+            return False
+
+    def _hit_window_edge(self, global_pos):
+        try:
+            g = self.frameGeometry()
+            th = 8
+            x = global_pos.x()
+            y = global_pos.y()
+            l = abs(x - g.left()) <= th
+            r = abs(x - g.right()) <= th
+            t = abs(y - g.top()) <= th
+            b = abs(y - g.bottom()) <= th
+            if l and t:
+                return 'lt'
+            if r and t:
+                return 'rt'
+            if l and b:
+                return 'lb'
+            if r and b:
+                return 'rb'
+            if l:
+                return 'left'
+            if r:
+                return 'right'
+            if t:
+                return 'top'
+            if b:
+                return 'bottom'
+            return None
+        except Exception:
+            return None
 
     
 
