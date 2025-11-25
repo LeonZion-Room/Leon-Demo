@@ -377,9 +377,13 @@ def render_units_page():
                         for r in recs_compact
                     ])
                     st.dataframe(df, use_container_width=True)
-                    cols_imgs = st.columns(len(recs_compact))
+                    cols_imgs = st.columns(len(recs_compact) + 1)
+                    with cols_imgs[0]:
+                        bp = t.get("baseline_path")
+                        if bp and os.path.exists(bp):
+                            st.image(bp, caption="基准", use_column_width=True)
                     for i, r in enumerate(recs_compact):
-                        with cols_imgs[i]:
+                        with cols_imgs[i + 1]:
                             p = r.get("screenshot_path")
                             if p and os.path.exists(p):
                                 st.image(p, caption=f"{format_ts(r['ts'])} | {round(r['similarity']*100,2)}%", use_column_width=True)
@@ -467,9 +471,13 @@ def render_exec_page():
                         for r in recs
                     ])
                     st.dataframe(df, use_container_width=True)
-                    cols_imgs = st.columns(len(recs))
+                    cols_imgs = st.columns(len(recs) + 1)
+                    with cols_imgs[0]:
+                        bp = t.get("baseline_path")
+                        if bp and os.path.exists(bp):
+                            st.image(bp, caption="基准", use_column_width=True)
                     for i, r in enumerate(recs):
-                        with cols_imgs[i]:
+                        with cols_imgs[i + 1]:
                             p = r.get("screenshot_path")
                             if p and os.path.exists(p):
                                 st.image(p, caption=f"{format_ts(r['ts'])} | {round(r['similarity']*100,2)}%", use_column_width=True)

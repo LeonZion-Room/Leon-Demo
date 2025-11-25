@@ -7,7 +7,7 @@
       "wait_seconds": 3,
       "baseline_path": "data\\baselines\\e83268f9.png",
       "created_at": 1764063659,
-      "next_run_ts": 1764065578.441599,
+      "next_run_ts": 1764066179.7309287,
       "is_active": true,
       "records": [
         {
@@ -33,6 +33,18 @@
           "screenshot_path": "data\\records\\e83268f9\\1764065278.png",
           "similarity": 1.0,
           "is_ok": true
+        },
+        {
+          "ts": 1764065578,
+          "screenshot_path": "data\\records\\e83268f9\\1764065578.png",
+          "similarity": 1.0,
+          "is_ok": true
+        },
+        {
+          "ts": 1764065879,
+          "screenshot_path": "data\\records\\e83268f9\\1764065879.png",
+          "similarity": 1.0,
+          "is_ok": true
         }
       ]
     },
@@ -43,7 +55,7 @@
       "wait_seconds": 3,
       "baseline_path": "data\\baselines\\3a365164.png",
       "created_at": 1764063988,
-      "next_run_ts": 1764065578.441599,
+      "next_run_ts": 1764066179.7309287,
       "is_active": true,
       "tags": [
         "豆包"
@@ -53,6 +65,18 @@
         {
           "ts": 1764065278,
           "screenshot_path": "data\\records\\3a365164\\1764065278.png",
+          "similarity": 0.9997912472547584,
+          "is_ok": true
+        },
+        {
+          "ts": 1764065578,
+          "screenshot_path": "data\\records\\3a365164\\1764065578.png",
+          "similarity": 0.9997912472547584,
+          "is_ok": true
+        },
+        {
+          "ts": 1764065879,
+          "screenshot_path": "data\\records\\3a365164\\1764065879.png",
           "similarity": 0.9997912472547584,
           "is_ok": true
         }
