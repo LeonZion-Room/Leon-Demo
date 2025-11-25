@@ -377,6 +377,12 @@ def render_units_page():
                         for r in recs_compact
                     ])
                     st.dataframe(df, use_container_width=True)
+                    cols_imgs = st.columns(len(recs_compact))
+                    for i, r in enumerate(recs_compact):
+                        with cols_imgs[i]:
+                            p = r.get("screenshot_path")
+                            if p and os.path.exists(p):
+                                st.image(p, caption=f"{format_ts(r['ts'])} | {round(r['similarity']*100,2)}%", use_column_width=True)
             st.divider()
 
     edit_id = st.session_state.get("units_edit_id")
@@ -461,6 +467,12 @@ def render_exec_page():
                         for r in recs
                     ])
                     st.dataframe(df, use_container_width=True)
+                    cols_imgs = st.columns(len(recs))
+                    for i, r in enumerate(recs):
+                        with cols_imgs[i]:
+                            p = r.get("screenshot_path")
+                            if p and os.path.exists(p):
+                                st.image(p, caption=f"{format_ts(r['ts'])} | {round(r['similarity']*100,2)}%", use_column_width=True)
             st.divider()
 
 def format_ts(ts):
