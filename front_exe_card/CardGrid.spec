@@ -5,7 +5,7 @@ a = Analysis(
     ['pyside_exe_card\\app.py'],
     pathex=[],
     binaries=[],
-    datas=[('pyside_exe_card\\data\\layout.json', 'pyside_exe_card\\data')],
+    datas=[],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},

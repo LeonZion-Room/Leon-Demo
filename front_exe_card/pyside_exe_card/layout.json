@@ -1,0 +1,79 @@
+{
+  "pages": [
+    {
+      "name": "页面 1",
+      "locked": false,
+      "gridCols": 6,
+      "gridRows": 4,
+      "items": [
+        {
+          "type": "card",
+          "url": "https://example.com",
+          "home": "https://example.com",
+          "mode": "in",
+          "collapsed": false,
+          "title": "example.com",
+          "titleColor": "#1677ff",
+          "zoom": 1.0,
+          "scroll": "hide",
+          "r": 0,
+          "c": 1,
+          "w": 1,
+          "h": 1
+        },
+        {
+          "type": "desktop",
+          "collapsed": false,
+          "title": "桌面",
+          "titleColor": "#1677ff",
+          "match": "",
+          "regex": false,
+          "classMatch": "",
+          "classRegex": false,
+          "lastTitle": "dist - 文件资源管理器",
+          "lastClass": "CabinetWClass",
+          "lastBounds": {
+            "w": 1379,
+            "h": 609
+          },
+          "selLabel": "dist - 文件资源管理器 (CabinetWClass)",
+          "hwnd": 4785762,
+          "r": 0,
+          "c": 2,
+          "w": 3,
+          "h": 2
+        }
+      ]
+    },
+    {
+      "name": "页面 2",
+      "locked": false,
+      "gridCols": 6,
+      "gridRows": 4,
+      "items": [
+        {
+          "type": "desktop",
+          "collapsed": false,
+          "title": "桌面",
+          "titleColor": "#1677ff",
+          "match": "",
+          "regex": false,
+          "classMatch": "",
+          "classRegex": false,
+          "lastTitle": "腾讯元宝",
+          "lastClass": "Tauri Window",
+          "lastBounds": {
+            "w": 1854,
+            "h": 609
+          },
+          "selLabel": "腾讯元宝 (Tauri Window)",
+          "hwnd": 2951936,
+          "r": 0,
+          "c": 1,
+          "w": 4,
+          "h": 2
+        }
+      ]
+    }
+  ]
+}
