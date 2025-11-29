@@ -3,6 +3,7 @@ import sys
 import json
 import difflib
 import time
+import ctypes
 from PySide6.QtCore import Qt, QUrl, QEvent, QTimer
 from PySide6.QtGui import QColor, QPainter, QDesktopServices, QAction
 from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QLineEdit, QPushButton, QLabel, QComboBox, QSlider, QColorDialog, QScrollArea, QFrame, QSpinBox, QDialog, QFormLayout, QDialogButtonBox, QCheckBox, QStyle, QSystemTrayIcon, QMenu, QMessageBox, QPlainTextEdit, QTabWidget, QInputDialog
@@ -876,6 +877,11 @@ class DesktopAppWidget(QFrame):
             self.host.setAttribute(Qt.WA_NativeWindow, True)
         except Exception:
             pass
+        try:
+            self.host.setFocusPolicy(Qt.ClickFocus)
+            self.host.installEventFilter(self)
+        except Exception:
+            pass
         bodyWrap.addWidget(self.host)
         self.logView = QPlainTextEdit(self)
         try:
@@ -1523,6 +1529,7 @@ class DesktopAppWidget(QFrame):
             try:
                 ex = win32gui.GetWindowLong(hwnd, win32con.GWL_EXSTYLE)
                 ex &= ~getattr(win32con, 'WS_EX_TOPMOST', 0)
+                ex &= ~getattr(win32con, 'WS_EX_NOACTIVATE', 0)
                 win32gui.SetWindowLong(hwnd, win32con.GWL_EXSTYLE, ex)
             except Exception:
                 pass
@@ -1531,7 +1538,7 @@ class DesktopAppWidget(QFrame):
             except Exception:
                 pass
             try:
-                win32gui.SetWindowPos(hwnd, 0, 0, 0, 0, 0, win32con.SWP_NOMOVE | win32con.SWP_NOSIZE | win32con.SWP_NOZORDER | win32con.SWP_NOACTIVATE | win32con.SWP_FRAMECHANGED)
+                win32gui.SetWindowPos(hwnd, 0, 0, 0, 0, 0, win32con.SWP_NOMOVE | win32con.SWP_NOSIZE | win32con.SWP_NOZORDER | win32con.SWP_FRAMECHANGED)
             except Exception:
                 pass
             win32gui.ShowWindow(hwnd, win32con.SW_SHOW)
@@ -1560,6 +1567,10 @@ class DesktopAppWidget(QFrame):
             except Exception:
                 pass
             self.target_hwnd = hwnd
+            try:
+                self._focus_target()
+            except Exception:
+                pass
         except Exception:
             pass
 
@@ -1585,11 +1596,66 @@ class DesktopAppWidget(QFrame):
             except Exception:
                 pass
             try:
-                win32gui.SetWindowPos(self.target_hwnd, 0, x, y, w, h, win32con.SWP_NOZORDER | win32con.SWP_NOACTIVATE)
+                win32gui.SetWindowPos(self.target_hwnd, 0, x, y, w, h, win32con.SWP_NOZORDER)
             except Exception:
                 pass
         except Exception:
             pass
+
+    def _focus_target(self):
+        if win32gui is None:
+            return
+        if not self.target_hwnd:
+            return
+        try:
+            try:
+                win32gui.SetForegroundWindow(int(self.window().winId()))
+            except Exception:
+                pass
+            try:
+                win32gui.SetFocus(self.target_hwnd)
+            except Exception:
+                try:
+                    user32 = ctypes.windll.user32
+                    tid1 = user32.GetWindowThreadProcessId(int(self.window().winId()), 0)
+                    tid2 = user32.GetWindowThreadProcessId(self.target_hwnd, 0)
+                    if tid1 and tid2:
+                        user32.AttachThreadInput(tid1, tid2, True)
+                        try:
+                            win32gui.SetFocus(self.target_hwnd)
+                        finally:
+                            user32.AttachThreadInput(tid1, tid2, False)
+                except Exception:
+                    pass
+        except Exception:
+            pass
+
+    def focusInEvent(self, e):
+        try:
+            self._focus_target()
+        except Exception:
+            pass
+        QFrame.focusInEvent(self, e)
+
+    def mousePressEvent(self, e):
+        try:
+            self._focus_target()
+        except Exception:
+            pass
+        QFrame.mousePressEvent(self, e)
+
+    def eventFilter(self, obj, ev):
+        try:
+            if obj is self.host:
+                if ev.type() in (QEvent.MouseButtonPress, QEvent.FocusIn, QEvent.Enter):
+                    try:
+                        self._focus_target()
+                    except Exception:
+                        pass
+                    return False
+        except Exception:
+            pass
+        return QFrame.eventFilter(self, obj, ev)
 
     def resizeEvent(self, e):
         QFrame.resizeEvent(self, e)
