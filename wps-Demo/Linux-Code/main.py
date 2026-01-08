@@ -605,27 +605,68 @@ def main():
 
     # 启动图：立即创建并显示，尽早出现
     try:
-        splash_img = _resource_path(os.path.join("rapidocr_modelsa", "fr.png"))
-        if not os.path.exists(splash_img):
-            # 兼容旧目录 rapidocr_models，避免资源缺失时报错
-            splash_img = _resource_path(os.path.join("rapidocr_models", "fr.png"))
-        # 预加载启动图，避免显示时再去 IO/网络加载导致卡顿
+        # 尝试多个可能的图片路径
+        possible_image_paths = [
+            os.path.join("rapidocr_modelsa", "fr.png"),
+            os.path.join("rapidocr_models", "fr.png"),
+            "logo.ico"  # 使用现有的logo.ico作为备选
+        ]
+        
+        splash_img = None
+        for img_path in possible_image_paths:
+            full_path = _resource_path(img_path)
+            if os.path.exists(full_path):
+                splash_img = full_path
+                break
+        
+        # 如果没有找到任何图片，使用一个简单的文本提示
+        if splash_img is None:
+            # 创建一个简单的临时图片作为启动图
+            try:
+                import tempfile
+                from PIL import Image, ImageDraw
+                
+                # 创建一个白色背景的图片
+                img = Image.new('RGB', (800, 600), color='white')
+                d = ImageDraw.Draw(img)
+                
+                # 添加文本
+                d.text((100, 250), "PDF工具集正在启动...", fill=(0, 0, 0))
+                
+                # 保存临时图片
+                temp_file = tempfile.NamedTemporaryFile(suffix='.png', delete=False)
+                img.save(temp_file, format='PNG')
+                temp_file.close()
+                splash_img = temp_file.name
+            except Exception as e:
+                print("创建临时启动图失败:", e)
+                # 如果创建临时图片也失败，使用一个空字符串作为回退
+                splash_img = ""
+        
+        # 预加载启动图
         try:
             fc.preload_image(splash_img)
         except Exception:
             pass
-        # 直接创建并显示启动图窗口（置顶），然后处理一次事件队列以尽快绘制
+        
+        # 直接创建并显示启动图窗口（置顶）
         splash_win = fc.FullScreenImageWindow(splash_img, "http://leyon.top/")
         splash_win.show()
+        
         try:
             splash_win.raise_()
+            splash_win.activateWindow()
         except Exception:
             pass
+        
         setattr(app, "_splash_window_early", splash_win)
+        
+        # 处理事件队列以尽快绘制
         try:
             app.processEvents()
         except Exception:
             pass
+            
     except Exception as e:
         print("启动图显示失败:", e)
 
